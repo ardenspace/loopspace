@@ -1,0 +1,13 @@
+{
+  "name": "loopspace",
+  "owner": {
+    "name": "ardenspace"
+  },
+  "plugins": [
+    {
+      "name": "loopspace",
+      "source": "./",
+      "description": "Spec-driven autonomous harness: plan with multi-lens verification, execute with TDD and independent verifiers, resume from disk. Keep context light, verify heavy."
+    }
+  ]
+}
