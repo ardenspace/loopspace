@@ -1,6 +1,6 @@
 ---
 name: looprun
-description: Use when a loopspace plan has been approved — runs the autonomous implement-verify loop. Dispatches a fresh implementer subagent (TDD contract) then a fresh independent verifier per task, updates .loopspace/ state after every task, and escalates or halts per the stall policy. No human decisions until done, halted, or context handoff.
+description: Use when a loopspace plan has been approved and execution should start or continue, including after a halt the human has resolved. No human decisions until done, halted, or context handoff.
 ---
 
 # looprun — The Autonomous Loop
@@ -9,7 +9,9 @@ Principle: **Keep context light, verify heavy.**
 
 Preconditions: `.loopspace/spec.md` and `.loopspace/plan.md` both
 `status: approved`, `.loopspace/state.md` exists. Missing → stop, suggest
-the right skill. All file formats: plugin `docs/state-format.md`.
+the right skill. `run_status: halted` → do not loop; go to Halt-Resume
+below. `run_status: complete` → say so, stop. All file formats:
+`../../docs/state-format.md` relative to this skill's base directory.
 
 ## Orchestrator Contract (what keeps this loop alive)
 
@@ -24,18 +26,34 @@ the right skill. All file formats: plugin `docs/state-format.md`.
 - Update `state.md` and `journal.md` after **every** task, before
   dispatching the next. A crash must never lose more than one task of
   progress.
+- Every dispatch carries the `## Project Facts` block from state.md, so
+  fresh subagents never re-discover the repo. When an implementer's report
+  corrects a fact (`facts:` line), update state.md before the next dispatch.
+- **Git checkpoint:** if the project is a git repository, commit after every
+  verifier PASS — message `loopspace: task <id> — <title>` — so one bad task
+  can always be rolled back to the last verified state. Never push.
 
 ## Per-Task Cycle
 
 ```
 next task = first non-done task in plan order
 1. Dispatch IMPLEMENTER (fresh) — prompt template A in references/agent-prompts.md
-   - carries: spec excerpt (only the R-ids this task covers), the task
-     block from plan.md, current handoff.md notes
-   - TDD contract: failing tests first (evidence required), then implement
-2. Dispatch VERIFIER (fresh, never the implementer) — template B
+   - carries: Project Facts, spec excerpt (only the R-ids this task
+     covers), the task block from plan.md, current handoff.md notes
+   - staged contract: UNDERSTAND → PLAN → TDD (failing tests first,
+     evidence required)
+2. Implementer BLOCKED? Classify the blocker line:
+   - external (missing credentials, service down, broken toolchain) →
+     stall policy tier 3, immediately
+   - ambiguous/contradictory criteria the plan could fix (bad
+     decomposition) → stall policy tier 1 re-plan path
+   - ambiguity only the spec owner can answer → stall policy tier 2
+   - anything else → counts as a failed attempt: attempts += 1, journal
+     the blocker, retry with a new fresh implementer carrying it
+3. Dispatch VERIFIER (fresh, never the implementer) — template B
    - risk tier from the task's risk tag decides checklist depth
-3. PASS → state.md: task done; journal entry; next task (fresh implementer)
+4. PASS → state.md: task done; git checkpoint commit; journal entry;
+   next task (fresh implementer)
    FAIL → attempts += 1; journal the verifier findings; retry with a NEW
    fresh implementer that receives those findings (template A, findings
    section filled)
@@ -63,6 +81,23 @@ next task = first non-done task in plan order
    toolchain) → halt immediately, `report.md` (trigger:
    `external-blocker`). Do not burn retries on environment problems.
 
+Every halt, whatever the trigger, also sets the offending task's status to
+`failed` in state.md.
+
+## Halt-Resume (run_status: halted)
+
+Entered from the preconditions check, typically via `/looprun` after the
+human resolved a halt:
+
+1. Summarize `report.md` and ask the human which option they chose (skip
+   the question if they already said).
+2. Journal `## [halt] resolved — <the decision, one line>`.
+3. Reset the failed task: status `pending`, `attempts: 0`. Apply the
+   decision if it changed the plan (via the re-plan path) — spec changes
+   still mean going back through `/loopspec`, not patching here.
+4. Set `run_status: executing`, delete `report.md`, re-enter the per-task
+   cycle.
+
 ## Phase Boundary
 
 When the last task of a phase is done:
@@ -70,9 +105,13 @@ When the last task of a phase is done:
 1. Dispatch a **PHASE VERIFIER** (fresh) — template C: full test suite,
    phase acceptance line from plan.md, cross-task integration.
 2. FAIL → treat as a failed task on the offending task id (it re-enters
-   the per-task cycle with the findings).
+   the per-task cycle with the findings). **Maximum 3 phase-verification
+   rounds per phase** — fixing task A can break task B and ping-pong
+   forever; a 4th FAIL halts (`report.md`, trigger: `phase-stall`).
 3. PASS → journal `[phase N] verified`; overwrite `handoff.md`
-   (trigger: `phase-boundary`); continue to the next phase.
+   (trigger: `phase-boundary`), carrying forward every previous-handoff
+   item that is still true — phase 1's flaky-test warning must survive
+   into phase 3; continue to the next phase.
 4. Last phase → `run_status: complete`, final journal entry, report
    totals to the human (tasks, retries, re-plans).
 
@@ -80,7 +119,9 @@ When the last task of a phase is done:
 
 Watch your own context consumption (system warnings, or the sheer length
 of your conversation). When roughly 30% is consumed — do not push your
-luck past it:
+luck past it. Self-estimates are unreliable, so use a hard proxy too:
+**if you cannot tell, hand off after 10 task cycles in one session**,
+whichever comes first:
 
 1. Finish the in-flight task cycle (never abandon a dispatched verifier).
 2. Overwrite `handoff.md` (trigger: `context-threshold`) with everything

@@ -69,15 +69,20 @@ killed session, a `/clear`, or a crash never loses more than the last task's pro
 - **Independent verifier.** A separate fresh subagent, never the implementer, checks the
   work and trusts nothing in the implementer's report. Every task, whatever its risk
   tier, gets the mechanical baseline: re-run the tests, map every acceptance criterion to
-  a test that would fail if it were violated, and scan changed files for hardcoded
-  secrets. Heavy-risk tasks additionally get test-gaming detection (empty tests,
+  a test that would fail if it were violated, scan changed files for hardcoded
+  secrets, and check that the implementer's failed-first TDD evidence is present and
+  plausible. Heavy-risk tasks additionally get test-gaming detection (empty tests,
   assertion-free tests, tests that mock away the behavior under test), a security review
-  of changed files, a scope-creep check, and a check that the implementer's failed-first
-  TDD evidence is present and plausible.
-- **TDD contract with failed-first evidence.** Implementers write the tests from the
-  task's acceptance criteria first, show them fail, then implement until they pass. The
-  journal entry for a task must show the failing-first evidence — a task without it hasn't
-  actually proven anything.
+  of changed files, and a scope-creep check.
+- **Staged TDD contract with failed-first evidence.** Implementers work in three stages:
+  understand the task's contract (contradictory or guess-requiring criteria mean
+  reporting BLOCKED, not improvising), plan the change (files, test list, approach),
+  then TDD — write the tests from the acceptance criteria first, show them fail,
+  implement until they pass. The journal entry for a task must show the failing-first
+  evidence — a task without it hasn't actually proven anything.
+- **Git checkpoints.** In a git repository, the orchestrator commits after every verified
+  task, so one bad task can always be rolled back to the last verified state instead of
+  poisoning everything after it.
 - **Light/heavy risk tiers.** The plan tags every task `light` (config, simple CRUD,
   markup, docs) or `heavy` (auth, core business logic, data migrations, anything touching
   a trust boundary). Light tasks get the cheap mechanical checklist; heavy tasks get the
@@ -91,7 +96,8 @@ killed session, a `/clear`, or a crash never loses more than the last task's pro
   or gap halts immediately with `trigger: spec-gap` — agents never modify the spec, it's
   the human's contract. An external blocker (missing credentials, a service that's down)
   halts immediately with `trigger: external-blocker`, no retries burned on an environment
-  problem.
+  problem. A halted run resumes with `/looprun` once you've decided: it journals the
+  decision, resets the failed task, and re-enters the loop.
 - **30% context handoff.** When the orchestrator's own context approaches roughly 30%, it
   finishes the task currently in flight, overwrites `.loopspace/handoff.md`, updates
   `state.md`, and ends its turn telling you to run `/clear` then `/loopresume`. Be
@@ -109,7 +115,7 @@ field and example, are in [`docs/state-format.md`](docs/state-format.md).
 |---|---|
 | `spec.md` | The approved spec: lens sections, requirements, approval record. Frozen after approval. |
 | `plan.md` | Phase → task tree with acceptance criteria and risk tags. Frozen after approval except recorded re-plans. |
-| `state.md` | Current phase/task pointer, per-task status and attempt counts. |
+| `state.md` | Run status from spec stage onward, current phase/task pointer, per-task status and attempt counts, project facts (test/build commands) injected into every subagent. |
 | `journal.md` | Append-only log: every task attempt, verdict, TDD evidence, files changed. |
 | `handoff.md` | Notes for the next session, overwritten at phase boundaries and at the context threshold. |
 | `report.md` | Halt report — progress, blocker, and options — written only when the run halts. |

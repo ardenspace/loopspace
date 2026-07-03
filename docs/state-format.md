@@ -73,14 +73,39 @@ acceptance:
 by hand. Format: "- <date> task <id>: <what changed and why>">
 ```
 
-## state.md — written by looprun after every task
+When a re-plan splits a task, the new tasks take letter suffixes of the
+original id in plan order: `2.3` → `2.3a`, `2.3b`. The original id never
+reappears in the task tree; state.md and journal.md reference the suffixed
+ids from then on.
+
+## state.md — created by loopspec, updated by every skill
+
+Lifecycle: `spec` (loopspec is drafting/interviewing) → `planning` (loopplan
+is drafting) → `executing` (set at plan approval) → `halted` or `complete`.
+The file exists from the moment loopspec starts drafting, so a crash at any
+pipeline stage leaves a resumable marker on disk.
+
+Before plan approval, state.md is header-only:
 
 ```markdown
 # Loopspace State
 version: 1
-run_status: executing       # spec | planning | executing | halted | complete
+run_status: spec            # spec | planning | executing | halted | complete
+```
+
+From plan approval on, the full form, rewritten by looprun after every task:
+
+```markdown
+# Loopspace State
+version: 1
+run_status: executing
 current_phase: 2
 current_task: 2.3
+
+## Project Facts
+- test: <command that runs the test suite>
+- build/run: <command, or "none yet">
+- stack: <language + framework, one line>
 
 ## Tasks
 | id  | status      | attempts | risk  |
@@ -89,7 +114,14 @@ current_task: 2.3
 | 2.3 | in_progress | 2        | heavy |
 ```
 
-`status` values: `pending | in_progress | done | failed`.
+`status` values: `pending | in_progress | done | failed`. `failed` is set
+only on the task that triggered a halt; the halt-resume procedure in looprun
+resets it to `pending` (attempts 0) when the human resolves the halt.
+
+Project Facts exist so fresh subagents never re-discover the repo: loopplan
+seeds them from the spec's Engineer Lens (a greenfield project may start
+with "none yet"), looprun injects them into every dispatch and corrects
+them whenever an implementer reports a differing fact.
 
 ## journal.md — append-only, written by looprun
 
@@ -109,6 +141,8 @@ version: 1
 ## [re-plan 2.3] <one line: what was split/reordered and why>
 
 ## [phase 1] verified — <one-line integration note>
+
+## [halt] resolved — <one line: the human's decision that cleared the halt>
 ```
 
 ## handoff.md — overwritten at phase boundaries and at the context threshold
@@ -129,13 +163,14 @@ trigger: phase-boundary     # phase-boundary | context-threshold
 - <traps: flaky test, slow command, naming collision>
 ```
 
-## report.md — written only on halt
+## report.md — written only on halt, deleted by the halt-resume procedure
+after its content is journaled
 
 ```markdown
 # Halt Report
 version: 1
 written: <YYYY-MM-DD>
-trigger: spec-gap           # task-stall | spec-gap | external-blocker
+trigger: spec-gap           # task-stall | phase-stall | spec-gap | external-blocker
 
 ## Progress
 <what is done, by phase/task id>

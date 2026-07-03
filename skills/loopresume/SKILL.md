@@ -1,6 +1,6 @@
 ---
 name: loopresume
-description: Use when a session starts in a project with an unfinished loopspace run (.loopspace/ exists), after /clear during a run, or when the user asks "where are we" — rebuilds orchestrator state from disk and continues the loop exactly where it stopped. Also answers status without resuming.
+description: Use when a session starts in a project with an unfinished loopspace run (.loopspace/ exists), after /clear during a run, or when the user asks "where are we" or for the run's status.
 ---
 
 # loopresume — Pick Up the Loop From Disk
@@ -10,7 +10,11 @@ only `.loopspace/` can continue exactly. This skill is that read path.
 
 ## Step 1 — Read state, in this order
 
-1. `.loopspace/state.md` — run_status, current position, attempt counts
+1. `.loopspace/state.md` — run_status, current position, attempt counts.
+   Missing while other `.loopspace/` files exist (pre-v0.3 run, or a crash
+   before it was first written) → don't guess a run_status: infer the stage
+   from `spec.md`/`plan.md` `status:` fields, report what you inferred, and
+   recreate state.md to match before continuing.
 2. `.loopspace/plan.md` — the task tree (skim: current phase in full,
    other phases by headers only — keep context light)
 3. `.loopspace/spec.md` — Goals, Non-Goals, and the R-ids covered by the
@@ -42,7 +46,11 @@ for status, stop here.
 - `executing` → invoke the looprun skill and re-enter the per-task
   cycle at `current_task`.
 - `halted` → summarize `report.md` and its options; await the human's
-  decision. Do not restart the loop on your own.
+  decision. Once they decide, hand over to the looprun skill's Halt-Resume
+  procedure — never restart the loop on your own.
 - `complete` → say so; nothing to resume.
-- `spec` / `planning` → the pipeline never reached execution; suggest
-  `/loopspec` or `/loopplan`.
+- `spec` → `spec.md` approved? suggest `/loopplan`. Still draft or absent?
+  suggest `/loopspec` — it resumes from the existing draft and interview
+  answers already captured in it.
+- `planning` → `plan.md` approved (crash before state was rewritten)?
+  suggest `/looprun`. Otherwise suggest `/loopplan` to finish the draft.

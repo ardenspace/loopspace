@@ -1,6 +1,6 @@
 ---
 name: loopspec
-description: Use when starting a new loopspace project or feature — turns an idea into a rigorously verified spec through a 4-lens interview (company, user, engineer, designer) and a 6-lens verification panel, ending with human approval. First step of the loopspace pipeline.
+description: Use when starting a new loopspace project or feature, when the user has an idea that needs to become a buildable spec, or when .loopspace/ has no approved spec yet. First step of the loopspace pipeline.
 ---
 
 # loopspec — Idea to Verified Spec
@@ -10,6 +10,12 @@ Principle: **Keep context light, verify heavy.** The spec stage is where
 caught in code, and precise requirements reduce implementation retries.
 
 The spec is the human's contract. Downstream agents never modify it.
+
+**Guard before anything else:** if `.loopspace/` already exists, read
+`state.md`'s `run_status` (and `spec.md`'s `status` if present) and report
+what you found. An active run (`planning`, `executing`, `halted`) or an
+approved spec is never overwritten silently — ask the human whether to
+archive the old run or abort.
 
 ## Flow
 
@@ -38,8 +44,12 @@ answers. Depth over speed — this stage is never cost-reduced.
 
 ## Step 2 — Draft
 
-Write `.loopspace/spec.md` in the exact format defined in the plugin's
-`docs/state-format.md` (spec.md section), with `status: draft`.
+Create `.loopspace/state.md` (header-only form, `run_status: spec`) if it
+does not exist — this is the resumable marker for the whole pipeline.
+
+Write `.loopspace/spec.md` in the exact format defined in
+`../../docs/state-format.md` relative to this skill's base directory
+(spec.md section), with `status: draft`.
 
 Requirements (`R1, R2, …`) must be testable phrasings — "R3: the CLI exits
 non-zero on malformed input", not "R3: good error handling".
@@ -59,7 +69,8 @@ Each returns findings tagged `[BLOCKING]` or `[NON-BLOCKING]`, or
   the panel. Maximum 3 rounds.
 - If blocking findings remain after round 3, present them to the human as
   open decisions — do not silently drop them.
-- Non-blocking findings accumulate; do not block on them.
+- Non-blocking findings accumulate; do not block on them — but prune any
+  the latest revision already resolved, so the human sees only live ones.
 
 ## Step 5 — Human Approval Gate
 

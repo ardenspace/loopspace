@@ -1,6 +1,6 @@
 ---
 name: loopplan
-description: Use when a loopspace spec has been approved — decomposes .loopspace/spec.md into phases and tasks with machine-checkable acceptance criteria and light/heavy risk tags, verifies the plan with a review panel, and gets human approval. This is the last human touchpoint before the autonomous loop.
+description: Use when a loopspace spec has been approved (.loopspace/spec.md, status approved) and the project has no approved plan yet. This is the last human touchpoint before the autonomous loop.
 ---
 
 # loopplan — Spec to Verified Plan
@@ -14,8 +14,12 @@ stop and suggest `/loopspec`.
 
 ## Step 1 — Decompose
 
-Write `.loopspace/plan.md` in the exact format defined in the plugin's
-`docs/state-format.md` (plan.md section), `status: draft`.
+Set `.loopspace/state.md` `run_status: planning` (create the header-only
+file if loopspec somehow didn't).
+
+Write `.loopspace/plan.md` in the exact format defined in
+`../../docs/state-format.md` relative to this skill's base directory
+(plan.md section), `status: draft`.
 
 **Phases:** each phase is a shippable increment — after it, the project
 runs and its tests pass, even if features are missing. Write the phase
@@ -59,9 +63,12 @@ remaining non-blocking findings. **Remind the human: this is the last
 approval — after this, the loop runs autonomously.** On approval:
 
 1. Set `plan.md` `status: approved`.
-2. Initialize `.loopspace/state.md` (format: `docs/state-format.md`):
-   `run_status: executing`, `current_phase: 1`, first task
-   `in_progress`-ready, all tasks `pending` with `attempts: 0`.
+2. Rewrite `.loopspace/state.md` in its full form (state.md section of the
+   format doc): `run_status: executing`, `current_phase: 1`,
+   `current_task:` the first task's id, every task `pending` with
+   `attempts: 0`. Seed `## Project Facts` (test command, build/run command,
+   stack) from the spec's Engineer Lens — "none yet" is a valid value for a
+   greenfield project.
 3. Initialize empty `.loopspace/journal.md` (header + version line).
 4. Suggest running `/looprun`.
 
