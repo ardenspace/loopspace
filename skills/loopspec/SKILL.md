@@ -34,6 +34,14 @@ Ask questions **one at a time**, in lens order: company → user → engineer �
 designer. Question banks: `references/interview-lenses.md`. Prefer multiple
 choice where natural.
 
+**Asking means waiting.** A question is delivered in exactly one of two
+ways: through the question tool (AskUserQuestion — preferred, with options),
+or as the final line of your turn, which then ends so the user can reply.
+The user's answer arrives in *their next message* — never earlier. A
+"question" you narrate mid-turn and move past in the same turn was never
+asked. The next question (and the next lens) may only begin after the
+previous answer has actually arrived.
+
 A question may be skipped only when you can quote the user's own words
 answering it. "The description implies it" is not an answer — ask.
 

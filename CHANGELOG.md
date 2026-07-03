@@ -5,10 +5,12 @@
 **Interview discipline hardened after the first dogfood run caught loopspec
 skipping the interview** ("user seems absent → adopt recommended defaults"):
 a question may be skipped only when the user's own words answer it;
-harness autonomy guidance is explicitly declared inapplicable during the
-interview; assumption markers in a draft are auto-`[BLOCKING]` for every
-panel reviewer; an existing draft is resumed with its assumptions treated
-as unanswered questions.
+"asking means waiting" — a question is delivered via the question tool or
+as the turn's final line, and the answer arrives in the user's next
+message, never narrated past mid-turn; harness autonomy guidance is
+explicitly declared inapplicable during the interview; assumption markers
+in a draft are auto-`[BLOCKING]` for every panel reviewer; an existing
+draft is resumed with its assumptions treated as unanswered questions.
 
 Robustness pass on all four skills after review:
 
