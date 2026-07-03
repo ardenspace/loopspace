@@ -12,6 +12,11 @@ criterion becomes a TDD test.
 Precondition: `.loopspace/spec.md` exists with `status: approved`. If not,
 stop and suggest `/loopspec`.
 
+If `.loopspace/plan.md` already exists as a draft, resume it: keep its
+decomposition and re-enter at Step 2 — panel results are not persisted on
+disk, and re-verifying is cheaper than trusting a previous session's
+memory. Never re-decompose from scratch unless the human asks.
+
 ## Step 1 — Decompose
 
 Set `.loopspace/state.md` `run_status: planning` (create the header-only
