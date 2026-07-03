@@ -138,6 +138,18 @@ version: 1
 ## [2.3] attempt 1 — FAIL
 - verifier: FAIL — <finding driving the retry>
 
+## [2.4] attempt 1 — FAIL          <!-- heavy task: three-lens panel -->
+- implementer: <one-line summary>
+- approach: <one line — feeds the diversity burst if the task stalls>
+- panel: correctness PASS / security FAIL / test-integrity PASS
+- findings: <lens-tagged findings driving the retry>
+
+## [2.3] burst candidate 1 — FAIL  <!-- diversity burst after 3 stalled attempts -->
+- approach: <one line — must differ from every failed approach>
+- verifier: FAIL — <finding>
+
+## [2.3] burst candidate 2 — PASS
+
 ## [re-plan 2.3] <one line: what was split/reordered and why>
 
 ## [phase 1] verified — <one-line integration note>

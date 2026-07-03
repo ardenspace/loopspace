@@ -24,6 +24,13 @@ HANDOFF NOTES (from previous work):
 PRIOR VERIFIER FINDINGS (retry only):
 {verifier findings from the failed attempt, or "first attempt"}
 
+APPROACH DIRECTIVE (diversity burst only):
+{all failed approaches so far, one `approach:` line each, verbatim — or
+"none: free choice". If approaches are listed, you MUST take a genuinely
+different route: different design, different decomposition, different
+library or mechanism. Repeating a listed approach with small tweaks
+wastes this candidate.}
+
 STAGED CONTRACT — mandatory order, no stage skipped:
 
 Stage 1 — UNDERSTAND (the task's spec is its acceptance criteria):
@@ -51,13 +58,15 @@ the acceptance criteria don't require.
 REPORT BACK (exactly this shape, nothing more):
 - verdict: DONE | BLOCKED
 - summary: <one line>
+- approach: <one line: the design/route you took — the orchestrator uses
+  this to force diversity if this attempt fails>
 - tdd-evidence: <test file> failed-first: <the one-line failure header
   from step 2>
 - files: <comma-separated files created/modified>
 - facts: <only if a PROJECT FACTS line is wrong/missing: the correction>
 - blocker: <only if BLOCKED: one line — what and why>
 
-## Template B — Verifier
+## Template B — Verifier (light tier)
 
 You are independently verifying a task implementation. You did not write
 it. Trust nothing in the implementer's report — re-derive everything.
@@ -71,9 +80,7 @@ TASK & ACCEPTANCE CRITERIA:
 IMPLEMENTER REPORT:
 {implementer's report}
 
-RISK TIER: {light | heavy}
-
-CHECKS — light tier (mechanical):
+CHECKS (mechanical):
 1. Re-run the tests yourself. They must pass.
 2. Map criteria → tests: every acceptance criterion has at least one test
    that would fail if the criterion were violated.
@@ -81,14 +88,54 @@ CHECKS — light tier (mechanical):
 4. TDD evidence: the implementer's failed-first output is present and
    plausible for these tests.
 
-CHECKS — heavy tier (all of light, plus):
-5. Test-gaming detection: open the tests. Flag empty tests, tests with no
+REPORT BACK (exactly this shape):
+- verdict: PASS | FAIL
+- note: <one line>
+- findings: <only if FAIL: numbered, one line each, actionable — the next
+  implementer sees these verbatim>
+
+## Template D — Heavy Panel Verifier (one lens per dispatch)
+
+Dispatched three times in one message for a heavy task, once per lens.
+Only the correctness lens runs commands; the other two lenses are
+read-only, which is what makes the parallel dispatch safe.
+
+You are one lens of a three-lens verification panel checking a task
+implementation. You did not write it. Trust nothing in the implementer's
+report — re-derive everything within your lens. Check ONLY your lens;
+the other lenses cover the rest, and a PASS from you asserts nothing
+outside your lens.
+
+PROJECT FACTS:
+{Project Facts block from state.md: test command, build/run command, stack}
+
+TASK & ACCEPTANCE CRITERIA:
+{task block verbatim}
+
+IMPLEMENTER REPORT:
+{implementer's report}
+
+YOUR LENS: {correctness | security | test-integrity}
+
+CHECKS — correctness lens (the only lens that runs commands):
+1. Re-run the tests yourself. They must pass.
+2. Map criteria → tests: every acceptance criterion has at least one test
+   that would fail if the criterion were violated.
+3. Scope creep: anything built that the acceptance criteria don't ask for.
+
+CHECKS — security lens (read-only, never run the test suite):
+1. Secret scan: no hardcoded credentials/keys/tokens in changed files.
+2. Injection surfaces and missing input validation at trust boundaries.
+3. Unsafe file/path/shell handling in changed files.
+
+CHECKS — test-integrity lens (read-only, never run the test suite):
+1. TDD evidence: the implementer's failed-first output is present and
+   plausible for these tests.
+2. Test-gaming detection: open the tests. Flag empty tests, tests with no
    assertions, tests that mock away the behavior under test.
-6. Security review of changed files: injection surfaces, missing input
-   validation at trust boundaries, unsafe file/path/shell handling.
-7. Scope creep: anything built that the acceptance criteria don't ask for.
 
 REPORT BACK (exactly this shape):
+- lens: <your lens>
 - verdict: PASS | FAIL
 - note: <one line>
 - findings: <only if FAIL: numbered, one line each, actionable — the next

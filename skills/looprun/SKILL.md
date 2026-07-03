@@ -50,10 +50,18 @@ next task = first non-done task in plan order
    - ambiguity only the spec owner can answer → stall policy tier 2
    - anything else → counts as a failed attempt: attempts += 1, journal
      the blocker, retry with a new fresh implementer carrying it
-3. Dispatch VERIFIER (fresh, never the implementer) — template B
-   - risk tier from the task's risk tag decides checklist depth
-4. PASS → state.md: task done; git checkpoint commit; journal entry;
-   next task (fresh implementer)
+3. Dispatch VERIFICATION (fresh, never the implementer)
+   - risk: light → one verifier, template B
+   - risk: heavy → three-lens panel, template D: dispatch three fresh
+     verifiers in ONE message (parallel) with lens = correctness,
+     security, test-integrity. Only the correctness lens runs
+     commands; the other two are read-only, which is what makes the
+     parallel dispatch safe. Verdict rule: PASS requires all three
+     lenses PASS — lenses are complementary coverage, not votes; a
+     security FAIL cannot be outvoted. Any lens FAIL → merge all FAIL
+     findings (numbered, lens-tagged) and take the FAIL path.
+4. PASS → state.md: task done; git checkpoint commit; journal entry
+   (heavy: record all three lens verdicts); next task (fresh implementer)
    FAIL → attempts += 1; journal the verifier findings; retry with a NEW
    fresh implementer that receives those findings (template A, findings
    section filled)
@@ -71,8 +79,26 @@ next task = first non-done task in plan order
      `report.md` (trigger: `task-stall`), end turn with the report summary.
    - Spec contradiction or gap → tier 2.
    - Anything else (persistent implementation failure with no plan or
-     spec cause) → halt the same way with `report.md`
-     (trigger: `task-stall`).
+     spec cause) → **diversity burst**, once per task, before halting.
+     Sequential retries share a failure mode: each fresh implementer
+     converges on roughly the same approach, so attempt 4 fails like
+     attempts 1–3. The burst forces sampling diversity instead:
+     1. Collect the `approach:` lines from every failed attempt.
+     2. Up to 3 candidates, strictly one at a time (they share one
+        working tree — never parallel). Before each: in a git repo,
+        reset to the last checkpoint (`git checkout -- .` +
+        `git clean -fd`); outside git, tell the candidate leftover
+        files from failed attempts may exist and are theirs to replace.
+        Dispatch a fresh implementer (template A) with the APPROACH
+        DIRECTIVE section filled: all failed approaches verbatim, and
+        the instruction to take a genuinely different one.
+     3. Each DONE candidate goes through normal verification (step 3
+        of the cycle — panel if heavy). attempts += 1 per candidate.
+        First PASS wins: journal `[<id>] burst candidate N — PASS`,
+        stop the burst, continue the run.
+     4. All candidates FAIL or BLOCKED → halt: `run_status: halted`,
+        `report.md` (trigger: `task-stall`) listing every approach
+        tried, end turn with the report summary.
 2. **Spec contradiction or gap** → halt: `state.md` `run_status: halted`,
    write `report.md` (trigger: `spec-gap`), end turn with the report
    summary. The spec is the human's contract — never modify it, never

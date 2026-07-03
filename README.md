@@ -66,14 +66,17 @@ killed session, a `/clear`, or a crash never loses more than the last task's pro
 - **Fresh subagent per task.** Every task gets a brand-new implementer, even if the
   previous one finished with context to spare. Workers are never reused across tasks —
   that's what keeps a bad assumption in task 2 from quietly leaking into task 5.
-- **Independent verifier.** A separate fresh subagent, never the implementer, checks the
-  work and trusts nothing in the implementer's report. Every task, whatever its risk
-  tier, gets the mechanical baseline: re-run the tests, map every acceptance criterion to
-  a test that would fail if it were violated, scan changed files for hardcoded
-  secrets, and check that the implementer's failed-first TDD evidence is present and
-  plausible. Heavy-risk tasks additionally get test-gaming detection (empty tests,
-  assertion-free tests, tests that mock away the behavior under test), a security review
-  of changed files, and a scope-creep check.
+- **Independent verification.** Fresh subagents that never wrote the code check the work
+  and trust nothing in the implementer's report. Light tasks get one verifier running the
+  mechanical baseline: re-run the tests, map every acceptance criterion to a test that
+  would fail if it were violated, scan changed files for hardcoded secrets, and check
+  that the implementer's failed-first TDD evidence is present and plausible. Heavy tasks
+  get a **three-lens panel** — correctness (tests, criteria mapping, scope creep),
+  security (secrets, injection surfaces, trust boundaries), and test-integrity (TDD
+  evidence, test-gaming detection: empty tests, assertion-free tests, tests that mock
+  away the behavior under test) — dispatched in parallel, and a PASS requires all three
+  lenses to pass. The lenses are complementary coverage, not votes: a security FAIL
+  cannot be outvoted by two other PASSes.
 - **Staged TDD contract with failed-first evidence.** Implementers work in three stages:
   understand the task's contract (contradictory or guess-requiring criteria mean
   reporting BLOCKED, not improvising), plan the change (files, test list, approach),
@@ -88,11 +91,17 @@ killed session, a `/clear`, or a crash never loses more than the last task's pro
   a trust boundary). Light tasks get the cheap mechanical checklist; heavy tasks get the
   full verifier pass. When a task's risk is ambiguous, the plan is supposed to tag it
   heavy, and the plan review panel checks that the tags are honest.
-- **3-tier stall policy.** If a task fails 3 attempts, the orchestrator classifies why. A
-  plan problem (task too large, wrong order, missing prerequisite) gets one re-plan within
-  spec bounds — split or reorder, reset attempts, continue; a second stall on that same
-  re-planned task, or any other persistent failure with no plan or spec cause, halts the
-  run and writes `.loopspace/report.md` with `trigger: task-stall`. A spec contradiction
+- **3-tier stall policy with a diversity burst.** If a task fails 3 attempts, the
+  orchestrator classifies why. A plan problem (task too large, wrong order, missing
+  prerequisite) gets one re-plan within spec bounds — split or reorder, reset attempts,
+  continue; a second stall on that same re-planned task halts the run and writes
+  `.loopspace/report.md` with `trigger: task-stall`. A persistent implementation failure
+  with no plan or spec cause gets a **diversity burst** before halting: up to 3 fresh
+  candidate implementers, each shown every failed approach and required to take a
+  genuinely different one, each independently verified — the first PASS wins, and only
+  if all candidates fail does the run halt. Sequential retries tend to converge on the
+  same approach; the burst buys the best-of-N sampling diversity that plain retries
+  don't have. A spec contradiction
   or gap halts immediately with `trigger: spec-gap` — agents never modify the spec, it's
   the human's contract. An external blocker (missing credentials, a service that's down)
   halts immediately with `trigger: external-blocker`, no retries burned on an environment
@@ -126,8 +135,10 @@ field and example, are in [`docs/state-format.md`](docs/state-format.md).
 implementer pass — that's the bet described above: this cost is bounded and predictable,
 while the cost of an unverified failure compounds as later tasks build on top of it. Risk
 tiers keep the average down: most tasks should be `light` and get the cheap mechanical
-checklist, and only `heavy` tasks (auth, core logic, migrations) pay for the full
-verifier pass.
+checklist, and only `heavy` tasks (auth, core logic, migrations) pay for the three-lens
+panel. The diversity burst is the same trade at the task level: it only spends extra
+candidates on tasks that already burned 3 attempts, where the alternative is halting and
+waiting for a human.
 
 **Why can't it clear its own context?** Because a Claude Code session cannot clear its own
 context — that's a harness constraint, not a design choice. loopspace works around it by

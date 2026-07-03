@@ -1,5 +1,32 @@
 # Changelog
 
+## 0.4.0 — 2026-07-03
+
+Two test-time-compute upgrades to the loop, both scoped so the extra
+tokens land only where they buy the most:
+
+- **Three-lens verification panel for heavy tasks.** A heavy task's
+  verification is now three fresh verifiers dispatched in parallel —
+  correctness (runs the tests, maps criteria to tests, checks scope
+  creep), security (secrets, injection surfaces, trust boundaries), and
+  test-integrity (TDD failed-first evidence, test-gaming detection).
+  PASS requires all three lenses: they are complementary coverage, not
+  votes, so a security FAIL cannot be outvoted. Only the correctness
+  lens runs commands; the other two are read-only, which is what makes
+  the parallel dispatch safe. Light tasks keep the single mechanical
+  verifier (Template B); the panel is Template D.
+- **Diversity burst on persistent task stalls.** When 3 attempts fail
+  with no plan or spec cause — the case that previously halted
+  immediately — the orchestrator now runs up to 3 candidate
+  implementers before halting. Each candidate sees every failed
+  approach verbatim and must take a genuinely different one; each is
+  independently verified; the first PASS wins. Candidates run strictly
+  one at a time (they share the working tree), with a reset to the last
+  git checkpoint before each. Implementer reports gain an `approach:`
+  line to feed the directive. All candidates failing halts with
+  `task-stall` as before, with every approach tried listed in the
+  report. One burst per task.
+
 ## 0.3.0 — 2026-07-03
 
 **Interview discipline hardened after the first dogfood run caught loopspec
