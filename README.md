@@ -40,7 +40,7 @@ killed session, a `/clear`, or a crash never loses more than the last task's pro
 
 ```
 /plugin marketplace add ardenspace/loopspace
-/plugin install loopspace
+/plugin install loopspace@loopspace
 ```
 
 ## Quickstart
