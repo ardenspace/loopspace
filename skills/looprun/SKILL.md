@@ -1,9 +1,9 @@
 ---
-name: run
+name: looprun
 description: Use when a loopspace plan has been approved — runs the autonomous implement-verify loop. Dispatches a fresh implementer subagent (TDD contract) then a fresh independent verifier per task, updates .loopspace/ state after every task, and escalates or halts per the stall policy. No human decisions until done, halted, or context handoff.
 ---
 
-# loopspace:run — The Autonomous Loop
+# looprun — The Autonomous Loop
 
 Principle: **Keep context light, verify heavy.**
 
@@ -86,7 +86,7 @@ luck past it:
 2. Overwrite `handoff.md` (trigger: `context-threshold`) with everything
    the next session needs.
 3. Update `state.md`, then end the turn telling the user exactly:
-   run `/clear`, then `/loopspace:resume`. This is typing, not judgment —
+   run `/clear`, then `/loopresume`. This is typing, not judgment —
    say so.
 
 ## Rules

@@ -1,9 +1,9 @@
 ---
-name: spec
+name: loopspec
 description: Use when starting a new loopspace project or feature — turns an idea into a rigorously verified spec through a 4-lens interview (company, user, engineer, designer) and a 6-lens verification panel, ending with human approval. First step of the loopspace pipeline.
 ---
 
-# loopspace:spec — Idea to Verified Spec
+# loopspec — Idea to Verified Spec
 
 Principle: **Keep context light, verify heavy.** The spec stage is where
 "verify heavy" pays most: a defect caught here is ~10x cheaper than one
@@ -19,7 +19,7 @@ interview (4 lenses, one question at a time)
   → verification panel (6 reviewer subagents, one lens each)
   → convergence loop: blocking findings? revise draft, re-panel (max 3 rounds)
   → present to human: draft + remaining non-blocking findings
-  → human approves → status: approved (frozen) → suggest /loopspace:plan
+  → human approves → status: approved (frozen) → suggest /loopplan
 ```
 
 ## Step 1 — Interview
@@ -69,7 +69,7 @@ and every remaining non-blocking finding. Ask the human to read
 
 On approval: set `status: approved`, fill the `## Approval` section with
 today's date and the open non-blocking findings, and suggest running
-`/loopspace:plan`.
+`/loopplan`.
 
 ## Rules
 

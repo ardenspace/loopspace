@@ -7,7 +7,7 @@ run exactly. Formats are line-oriented so they can be parsed with grep/sed.
 Every file's first body line is `version: 1`. Consumers must check it and
 refuse to guess on unknown versions.
 
-## spec.md — written by loopspace:spec, frozen after approval
+## spec.md — written by loopspec, frozen after approval
 
 ```markdown
 # Spec: <project name>
@@ -45,7 +45,7 @@ Approved by human on <YYYY-MM-DD>. Open non-blocking issues at approval:
 - <finding or "none">
 ```
 
-## plan.md — written by loopspace:plan, frozen after approval except recorded re-plans
+## plan.md — written by loopplan, frozen after approval except recorded re-plans
 
 ```markdown
 # Plan: <project name>
@@ -73,7 +73,7 @@ acceptance:
 by hand. Format: "- <date> task <id>: <what changed and why>">
 ```
 
-## state.md — written by loopspace:run after every task
+## state.md — written by looprun after every task
 
 ```markdown
 # Loopspace State
@@ -91,7 +91,7 @@ current_task: 2.3
 
 `status` values: `pending | in_progress | done | failed`.
 
-## journal.md — append-only, written by loopspace:run
+## journal.md — append-only, written by looprun
 
 ```markdown
 # Journal
@@ -149,5 +149,5 @@ trigger: spec-gap           # task-stall | spec-gap | external-blocker
 - C: <option + consequence>
 
 ## Awaiting
-Human decision. Re-run /loopspace:run after resolving.
+Human decision. Re-run /looprun after resolving.
 ```

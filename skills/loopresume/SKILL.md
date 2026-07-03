@@ -1,9 +1,9 @@
 ---
-name: resume
+name: loopresume
 description: Use when a session starts in a project with an unfinished loopspace run (.loopspace/ exists), after /clear during a run, or when the user asks "where are we" — rebuilds orchestrator state from disk and continues the loop exactly where it stopped. Also answers status without resuming.
 ---
 
-# loopspace:resume — Pick Up the Loop From Disk
+# loopresume — Pick Up the Loop From Disk
 
 The whole point of loopspace's disk-based state: a fresh session reading
 only `.loopspace/` can continue exactly. This skill is that read path.
@@ -39,10 +39,10 @@ for status, stop here.
 
 ## Step 4 — Continue by run_status
 
-- `executing` → invoke the loopspace:run skill and re-enter the per-task
+- `executing` → invoke the looprun skill and re-enter the per-task
   cycle at `current_task`.
 - `halted` → summarize `report.md` and its options; await the human's
   decision. Do not restart the loop on your own.
 - `complete` → say so; nothing to resume.
 - `spec` / `planning` → the pipeline never reached execution; suggest
-  `/loopspace:spec` or `/loopspace:plan`.
+  `/loopspec` or `/loopplan`.

@@ -1,16 +1,16 @@
 ---
-name: plan
+name: loopplan
 description: Use when a loopspace spec has been approved — decomposes .loopspace/spec.md into phases and tasks with machine-checkable acceptance criteria and light/heavy risk tags, verifies the plan with a review panel, and gets human approval. This is the last human touchpoint before the autonomous loop.
 ---
 
-# loopspace:plan — Spec to Verified Plan
+# loopplan — Spec to Verified Plan
 
 Principle: **Keep context light, verify heavy.** Acceptance-criteria
 precision set here is the quality ceiling of the autonomous loop — each
 criterion becomes a TDD test.
 
 Precondition: `.loopspace/spec.md` exists with `status: approved`. If not,
-stop and suggest `/loopspace:spec`.
+stop and suggest `/loopspec`.
 
 ## Step 1 — Decompose
 
@@ -63,7 +63,7 @@ approval — after this, the loop runs autonomously.** On approval:
    `run_status: executing`, `current_phase: 1`, first task
    `in_progress`-ready, all tasks `pending` with `attempts: 0`.
 3. Initialize empty `.loopspace/journal.md` (header + version line).
-4. Suggest running `/loopspace:run`.
+4. Suggest running `/looprun`.
 
 ## Rules
 

@@ -15,25 +15,25 @@ that task 2.3 quietly broke the thing task 4.1 depends on.
 ## How it works
 
 ```
- idea ──▶ /loopspace:spec ──▶ /loopspace:plan ──▶ /loopspace:run ─────▶ done
+ idea ──▶ /loopspec ─────────▶ /loopplan ───────▶ /looprun ───────────▶ done
            4-lens interview     phases → tasks       ┌──────────────┐
            6-lens verify panel  criteria + risk tags │ per task:    │
            human approves       human approves       │  implementer │
                                 (last touchpoint)    │  → verifier  │
                                                      │  fresh agents│
                                                      └──── loop ────┘
-        state lives in .loopspace/ — kill the session, /loopspace:resume continues
+        state lives in .loopspace/ — kill the session, /loopresume continues
 ```
 
-`/loopspace:spec` turns an idea into a rigorously reviewed spec through a four-lens
+`/loopspec` turns an idea into a rigorously reviewed spec through a four-lens
 interview (company, user, engineer, designer) and a six-lens verification panel, converging
-over up to three rounds before a human approves it. `/loopspace:plan` decomposes the
+over up to three rounds before a human approves it. `/loopplan` decomposes the
 approved spec into phases and tasks, each with machine-checkable acceptance criteria and a
 `light`/`heavy` risk tag, reviewed by a three-lens panel, then approved by a human — the
-last human decision in the pipeline. `/loopspace:run` is the autonomous loop: for every
+last human decision in the pipeline. `/looprun` is the autonomous loop: for every
 task, a fresh implementer subagent builds it under a TDD contract and a fresh verifier
 subagent independently checks it, until the plan is done or the loop halts with a report.
-`/loopspace:resume` rebuilds the orchestrator's position from `.loopspace/` alone, so a
+`/loopresume` rebuilds the orchestrator's position from `.loopspace/` alone, so a
 killed session, a `/clear`, or a crash never loses more than the last task's progress.
 
 ## Install
@@ -46,18 +46,18 @@ killed session, a `/clear`, or a crash never loses more than the last task's pro
 ## Quickstart
 
 1. Install the plugin (above).
-2. In your project, run `/loopspace:spec` and answer the interview one question at a
+2. In your project, run `/loopspec` and answer the interview one question at a
    time — company, user, engineer, then designer (auto-skipped if the project has no UI).
    Read the drafted `.loopspace/spec.md`, resolve any open panel findings you care about,
    and approve it.
-3. Run `/loopspace:plan`. It turns the approved spec into phases and tasks with
+3. Run `/loopplan`. It turns the approved spec into phases and tasks with
    acceptance criteria and risk tags, runs its own review panel, and asks you to approve
    the result. This is the last approval — after it, the loop runs unattended.
-4. Run `/loopspace:run`. The orchestrator dispatches a fresh implementer and a fresh
+4. Run `/looprun`. The orchestrator dispatches a fresh implementer and a fresh
    verifier per task, updates `.loopspace/state.md` and `.loopspace/journal.md` after
    every task, and keeps going until the plan is complete or something halts it.
 5. If the session dies, or the orchestrator tells you it's approaching its context
-   threshold and to `/clear`, do that, then run `/loopspace:resume` in the fresh session.
+   threshold and to `/clear`, do that, then run `/loopresume` in the fresh session.
    It reads `.loopspace/` and continues exactly where it stopped — or reports why it
    halted, if it halted.
 
@@ -94,7 +94,7 @@ killed session, a `/clear`, or a crash never loses more than the last task's pro
   problem.
 - **30% context handoff.** When the orchestrator's own context approaches roughly 30%, it
   finishes the task currently in flight, overwrites `.loopspace/handoff.md`, updates
-  `state.md`, and ends its turn telling you to run `/clear` then `/loopspace:resume`. Be
+  `state.md`, and ends its turn telling you to run `/clear` then `/loopresume`. Be
   clear about what this is: a Claude Code session cannot clear its own context, so this
   handoff is a real manual step, not a formality. It's typing, not judgment, but you have
   to do it.
@@ -126,7 +126,7 @@ verifier pass.
 **Why can't it clear its own context?** Because a Claude Code session cannot clear its own
 context — that's a harness constraint, not a design choice. loopspace works around it by
 writing everything the next session needs to `.loopspace/` before the threshold, then
-asking you to run `/clear` and `/loopspace:resume` yourself. That manual step is the one
+asking you to run `/clear` and `/loopresume` yourself. That manual step is the one
 place a human touches an otherwise autonomous run.
 
 **Other harnesses (Codex, etc.)?** Not in v1 — this plugin targets Claude Code only. The

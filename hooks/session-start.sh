@@ -13,5 +13,5 @@ case "$status" in
 esac
 
 printf 'This project has an unfinished loopspace run (run_status: %s). ' "$status"
-printf 'Run /loopspace:resume — it reports status first, then continues the run.\n'
+printf 'Run /loopresume — it reports status first, then continues the run.\n'
 exit 0
