@@ -15,13 +15,16 @@ that task 2.3 quietly broke the thing task 4.1 depends on.
 ## How it works
 
 ```
- idea ──▶ /loopspec ─────────▶ /loopplan ───────▶ /looprun ───────────▶ done
-           4-lens interview     phases → tasks       ┌──────────────┐
-           6-lens verify panel  criteria + risk tags │ per task:    │
-           human approves       human approves       │  implementer │
-                                (last touchpoint)    │  → verifier  │
-                                                     │  fresh agents│
-                                                     └──── loop ────┘
+ idea ──▶ /loopspec ─────────▶ /loopplan ───────▶ /looprun ──────────────▶ done
+           4-lens interview     phases → tasks     ┌────────────────────┐
+           6-lens verify panel  criteria + risk    │ per task (fresh):  │
+           human approves       human approves     │  implementer (TDD) │
+                                (last touchpoint)  │  → verify:         │
+                                                   │    light: 1 agent  │
+                                                   │    heavy: 3 lenses │
+                                                   │  stalled? burst of │
+                                                   │  diverse retries   │
+                                                   └──────── loop ──────┘
         state lives in .loopspace/ — kill the session, /loopresume continues
 ```
 
@@ -31,8 +34,11 @@ over up to three rounds before a human approves it. `/loopplan` decomposes the
 approved spec into phases and tasks, each with machine-checkable acceptance criteria and a
 `light`/`heavy` risk tag, reviewed by a three-lens panel, then approved by a human — the
 last human decision in the pipeline. `/looprun` is the autonomous loop: for every
-task, a fresh implementer subagent builds it under a TDD contract and a fresh verifier
-subagent independently checks it, until the plan is done or the loop halts with a report.
+task, a fresh implementer subagent builds it under a TDD contract, and fresh verifiers
+independently check it — one mechanical verifier for `light` tasks, a three-lens panel
+(correctness, security, test-integrity) for `heavy` ones — until the plan is done or the
+loop halts with a report. A task that keeps failing escalates through a diversity burst
+of approach-forced retries before it is allowed to halt the run.
 `/loopresume` rebuilds the orchestrator's position from `.loopspace/` alone, so a
 killed session, a `/clear`, or a crash never loses more than the last task's progress.
 
@@ -53,9 +59,12 @@ killed session, a `/clear`, or a crash never loses more than the last task's pro
 3. Run `/loopplan`. It turns the approved spec into phases and tasks with
    acceptance criteria and risk tags, runs its own review panel, and asks you to approve
    the result. This is the last approval — after it, the loop runs unattended.
-4. Run `/looprun`. The orchestrator dispatches a fresh implementer and a fresh
-   verifier per task, updates `.loopspace/state.md` and `.loopspace/journal.md` after
-   every task, and keeps going until the plan is complete or something halts it.
+4. Run `/looprun`. The orchestrator dispatches a fresh implementer per task, then
+   verification sized to the task's risk tag — one verifier for `light`, a three-lens
+   panel for `heavy`. It updates `.loopspace/state.md` and `.loopspace/journal.md` after
+   every task and keeps going until the plan is complete or something halts it. Retries,
+   re-plans, and diversity bursts (see below) all happen without you; you only hear about
+   a task again if the whole escalation ladder failed.
 5. If the session dies, or the orchestrator tells you it's approaching its context
    threshold and to `/clear`, do that, then run `/loopresume` in the fresh session.
    It reads `.loopspace/` and continues exactly where it stopped — or reports why it
@@ -89,30 +98,50 @@ killed session, a `/clear`, or a crash never loses more than the last task's pro
 - **Light/heavy risk tiers.** The plan tags every task `light` (config, simple CRUD,
   markup, docs) or `heavy` (auth, core business logic, data migrations, anything touching
   a trust boundary). Light tasks get the cheap mechanical checklist; heavy tasks get the
-  full verifier pass. When a task's risk is ambiguous, the plan is supposed to tag it
+  three-lens panel. When a task's risk is ambiguous, the plan is supposed to tag it
   heavy, and the plan review panel checks that the tags are honest.
-- **3-tier stall policy with a diversity burst.** If a task fails 3 attempts, the
-  orchestrator classifies why. A plan problem (task too large, wrong order, missing
-  prerequisite) gets one re-plan within spec bounds — split or reorder, reset attempts,
-  continue; a second stall on that same re-planned task halts the run and writes
-  `.loopspace/report.md` with `trigger: task-stall`. A persistent implementation failure
-  with no plan or spec cause gets a **diversity burst** before halting: up to 3 fresh
-  candidate implementers, each shown every failed approach and required to take a
-  genuinely different one, each independently verified — the first PASS wins, and only
-  if all candidates fail does the run halt. Sequential retries tend to converge on the
-  same approach; the burst buys the best-of-N sampling diversity that plain retries
-  don't have. A spec contradiction
-  or gap halts immediately with `trigger: spec-gap` — agents never modify the spec, it's
-  the human's contract. An external blocker (missing credentials, a service that's down)
-  halts immediately with `trigger: external-blocker`, no retries burned on an environment
-  problem. A halted run resumes with `/looprun` once you've decided: it journals the
-  decision, resets the failed task, and re-enters the loop.
+- **Escalation before halting.** A failing task climbs a ladder — findings-carrying
+  retries, cause classification, one re-plan if the plan is at fault, a diversity burst
+  of approach-forced candidates if the task is just stubborn — and only halts the run
+  when the whole ladder is exhausted, or immediately when the cause is one no retry can
+  fix: a spec contradiction (`spec-gap` — agents never modify the spec, it's the human's
+  contract) or an external blocker (`external-blocker` — no retries burned on a dead
+  service or missing credentials). The full ladder is drawn in the next section.
 - **30% context handoff.** When the orchestrator's own context approaches roughly 30%, it
   finishes the task currently in flight, overwrites `.loopspace/handoff.md`, updates
   `state.md`, and ends its turn telling you to run `/clear` then `/loopresume`. Be
   clear about what this is: a Claude Code session cannot clear its own context, so this
   handoff is a real manual step, not a formality. It's typing, not judgment, but you have
   to do it.
+
+## What happens when a task fails
+
+You don't do anything — the escalation ladder is automatic, and every rung is journaled:
+
+```
+verifier FAIL ──▶ retry: new fresh implementer, carrying the findings   (up to 3×)
+                    │
+     3 failed ──▶ orchestrator classifies the cause:
+                    ├─ plan problem   ──▶ one re-plan (split/reorder), continue
+                    ├─ spec gap       ──▶ HALT — the spec is yours, agents never touch it
+                    ├─ external       ──▶ HALT — no retries burned on a dead service
+                    └─ stubborn task  ──▶ diversity burst:
+                         up to 3 candidates, one at a time, tree reset to the
+                         last checkpoint before each; every candidate sees all
+                         failed approaches and must take a different one; each
+                         is independently verified — first PASS wins
+                           └─ all fail ──▶ HALT + report.md listing every approach
+```
+
+The burst exists because plain retries converge: a fresh implementer given the same task
+tends to rediscover the same approach, so attempt 4 fails like attempts 1–3. Forcing each
+candidate onto a genuinely different route buys the best-of-N sampling diversity that
+sequential retries don't have — targeted at the only tasks that need it, the ones that
+already burned three attempts and would otherwise stop the run to wait for you.
+
+When a run does halt, `.loopspace/report.md` tells you what progressed, what blocked, and
+your options; decide, then run `/looprun` again — it journals your decision, resets the
+failed task, and re-enters the loop.
 
 ## State files
 
