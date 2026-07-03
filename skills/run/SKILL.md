@@ -49,8 +49,12 @@ next task = first non-done task in plan order
      re-plan **within spec bounds**: split/reorder tasks, append to
      plan.md `## Re-plans` and journal.md, reset attempts, continue.
      Limit: **one re-plan per task** — a second stall on the same
-     (re-planned) task escalates to tier 2 reporting.
-   - Anything else → tier 2.
+     (re-planned) task halts: `state.md` `run_status: halted`, write
+     `report.md` (trigger: `task-stall`), end turn with the report summary.
+   - Spec contradiction or gap → tier 2.
+   - Anything else (persistent implementation failure with no plan or
+     spec cause) → halt the same way with `report.md`
+     (trigger: `task-stall`).
 2. **Spec contradiction or gap** → halt: `state.md` `run_status: halted`,
    write `report.md` (trigger: `spec-gap`), end turn with the report
    summary. The spec is the human's contract — never modify it, never
