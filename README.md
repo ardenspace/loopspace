@@ -67,10 +67,13 @@ killed session, a `/clear`, or a crash never loses more than the last task's pro
   previous one finished with context to spare. Workers are never reused across tasks —
   that's what keeps a bad assumption in task 2 from quietly leaking into task 5.
 - **Independent verifier.** A separate fresh subagent, never the implementer, checks the
-  work: it re-runs the tests instead of trusting the implementer's claim that they pass,
-  maps every acceptance criterion to a real test, and watches for test-gaming (empty
-  tests, all-mock tests, assertion-free tests). Heavy-risk tasks additionally get a
-  security pass and a scope-creep check.
+  work and trusts nothing in the implementer's report. Every task, whatever its risk
+  tier, gets the mechanical baseline: re-run the tests, map every acceptance criterion to
+  a test that would fail if it were violated, and scan changed files for hardcoded
+  secrets. Heavy-risk tasks additionally get test-gaming detection (empty tests,
+  assertion-free tests, tests that mock away the behavior under test), a security review
+  of changed files, a scope-creep check, and a check that the implementer's failed-first
+  TDD evidence is present and plausible.
 - **TDD contract with failed-first evidence.** Implementers write the tests from the
   task's acceptance criteria first, show them fail, then implement until they pass. The
   journal entry for a task must show the failing-first evidence — a task without it hasn't
