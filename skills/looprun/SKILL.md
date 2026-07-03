@@ -111,7 +111,9 @@ When the last task of a phase is done:
 3. PASS → journal `[phase N] verified`; overwrite `handoff.md`
    (trigger: `phase-boundary`), carrying forward every previous-handoff
    item that is still true — phase 1's flaky-test warning must survive
-   into phase 3; continue to the next phase.
+   into phase 3; commit the boundary (`loopspace: phase <N> verified`) so
+   the phase journal entry and fresh handoff are checkpointed, not riding
+   uncommitted into the next phase; continue to the next phase.
 4. Last phase → `run_status: complete`, final journal entry, report
    totals to the human (tasks, retries, re-plans).
 

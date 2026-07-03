@@ -23,7 +23,10 @@ Robustness pass on all four skills after review:
   re-enters the loop. Halts now mark the offending task `failed`.
 - Implementer `BLOCKED` verdicts are now handled explicitly (external →
   halt, ambiguity → spec-gap, else failed attempt).
-- Git checkpoint: commit after every verifier PASS in git repositories.
+- Git checkpoint: commit after every verifier PASS in git repositories,
+  plus a boundary commit after each phase verification so the phase
+  journal entry and fresh handoff don't ride uncommitted into the next
+  phase.
 - New `## Project Facts` block in `state.md` (test/build commands, stack),
   seeded by loopplan and injected into every subagent dispatch.
 - Implementer contract is now staged: UNDERSTAND (ambiguous criteria →
