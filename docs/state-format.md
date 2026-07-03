@@ -138,11 +138,18 @@ version: 1
 ## [2.3] attempt 1 — FAIL
 - verifier: FAIL — <finding driving the retry>
 
+## [2.3] attempt 2 — FAIL
+- verifier: FAIL — <finding driving the retry>
+- contested: #2 dropped — <verifier's one-line reason; a dropped finding
+  is never carried into the retry's findings>
+
 ## [2.4] attempt 1 — FAIL          <!-- heavy task: three-lens panel -->
 - implementer: <one-line summary>
 - approach: <one line — feeds the diversity burst if the task stalls>
 - panel: correctness PASS / security FAIL / test-integrity PASS
 - findings: <lens-tagged findings driving the retry>
+
+## [stall 2.3] cause: stubborn — evidence: "<verbatim finding line that justified the classification>"
 
 ## [2.3] burst candidate 1 — FAIL  <!-- diversity burst after 3 stalled attempts -->
 - approach: <one line — must differ from every failed approach>

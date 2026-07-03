@@ -52,25 +52,39 @@ next task = first non-done task in plan order
      the blocker, retry with a new fresh implementer carrying it
 3. Dispatch VERIFICATION (fresh, never the implementer)
    - risk: light → one verifier, template B
-   - risk: heavy → three-lens panel, template D: dispatch three fresh
-     verifiers in ONE message (parallel) with lens = correctness,
-     security, test-integrity. Only the correctness lens runs
-     commands; the other two are read-only, which is what makes the
-     parallel dispatch safe. Verdict rule: PASS requires all three
-     lenses PASS — lenses are complementary coverage, not votes; a
-     security FAIL cannot be outvoted. Any lens FAIL → merge all FAIL
-     findings (numbered, lens-tagged) and take the FAIL path.
+   - risk: heavy → three-lens panel, template D, in two waves: dispatch
+     security + test-integrity in ONE message (both read-only, safe in
+     parallel, and they see the tree exactly as the implementer left
+     it); when both report, dispatch correctness alone — it runs
+     commands and briefly stashes the implementation for the mechanical
+     failed-first check, so it can never run beside a reader. Verdict
+     rule: PASS requires all three lenses PASS — lenses are
+     complementary coverage, not votes; a security FAIL cannot be
+     outvoted. Any lens FAIL → merge all FAIL findings (numbered,
+     lens-tagged) and take the FAIL path.
+   - retry dispatches: fill the CONTESTED FINDINGS section with the
+     `contested:` lines from the implementer's report (or "none").
+     Never adjudicate a contest yourself — re-deriving facts is the
+     verifier's job, and your diet stays.
 4. PASS → state.md: task done; git checkpoint commit; journal entry
    (heavy: record all three lens verdicts); next task (fresh implementer)
    FAIL → attempts += 1; journal the verifier findings; retry with a NEW
    fresh implementer that receives those findings (template A, findings
    section filled)
+   Either way, journal any contested resolutions (`#N confirmed/dropped`);
+   a dropped finding is never carried into the retry's findings.
 ```
 
 ## Stall Policy (3-tier escalation)
 
-1. **Same task fails 3 attempts** → classify the cause yourself from the
-   verifier findings:
+1. **Same task fails 3 attempts** → classify the cause from the verifier
+   findings, and journal the classification with its evidence BEFORE
+   branching: `## [stall <id>] cause: <plan | spec-gap | stubborn> —
+   evidence: "<the verbatim finding line(s) that justify it>"`. A cause
+   you cannot back with a quoted finding line is not available to you —
+   default to the stubborn-task branch: a wrong burst only wastes
+   candidates, while a wrong re-plan burns the task's one re-plan and a
+   wrong halt costs a human roundtrip.
    - Plan problem (task too large, wrong order, missing prerequisite) →
      re-plan **within spec bounds**: split/reorder tasks, append to
      plan.md `## Re-plans` and journal.md, reset attempts, continue.
@@ -161,5 +175,7 @@ whichever comes first:
 ## Rules
 
 - Verifier verdicts are final. No re-litigating a FAIL in your own context.
+  A contested finding is settled only by the next verifier's
+  confirm/drop — never by you.
 - Never mark a task done without a verifier PASS in the journal.
 - Never modify spec.md. plan.md changes only through the re-plan path.

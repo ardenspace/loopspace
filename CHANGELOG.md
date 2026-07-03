@@ -1,5 +1,39 @@
 # Changelog
 
+## 0.5.0 — 2026-07-03
+
+Three trust-to-mechanics conversions after the first real runs — each
+replaces a link where an agent's claim was read and believed with one
+where it is executed and checked, at near-zero runtime cost (no new
+dispatches; prompt and rule changes only):
+
+- **Mechanical failed-first proof (heavy tier).** The correctness lens no
+  longer just reads the implementer's failed-first evidence: it stashes
+  the implementation files (`git stash push -u -- <impl files>`), re-runs
+  the tests, confirms the task's tests actually FAIL without the
+  implementation, and restores. This kills both fabricated TDD evidence
+  and tests that never exercise the implementation. Consequence: the
+  heavy panel now dispatches in two waves — security + test-integrity in
+  parallel (read-only), then correctness alone — because a lens that
+  stashes the tree can never run beside a reader. The light tier keeps
+  the plausibility read.
+- **Contested-findings channel.** A retry implementer that can prove a
+  prior finding factually wrong (file:line or command output) contests it
+  in its report instead of "fixing" a non-problem — a hallucinated FAIL
+  previously produced scope creep exactly this way. The next verifier
+  must explicitly confirm or drop every contested finding in its lens;
+  dropped findings never reach the next retry. Judgment calls are not
+  contestable, and verdict authority never leaves the verifiers — the
+  orchestrator passes contests through, it never adjudicates them.
+- **Evidence-cited stall classification.** The stall-cause branch (plan
+  problem / spec gap / stubborn) was the pipeline's only unverified
+  judgment point. The orchestrator now journals the classification
+  quoting the verbatim finding lines that justify it before branching
+  (`## [stall <id>] cause: ... — evidence: "..."`); a cause it cannot
+  back with a quoted finding defaults to the stubborn-task branch — the
+  only branch that is cheap to be wrong about (a wasted burst, not a
+  burned re-plan or a needless halt).
+
 ## 0.4.0 — 2026-07-03
 
 Two test-time-compute upgrades to the loop, both scoped so the extra

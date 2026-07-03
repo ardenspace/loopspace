@@ -23,6 +23,12 @@ HANDOFF NOTES (from previous work):
 
 PRIOR VERIFIER FINDINGS (retry only):
 {verifier findings from the failed attempt, or "first attempt"}
+If a finding is factually wrong — it misreads code you can point at, or
+contradicts command output you can capture — do NOT "fix" it: fixing a
+non-problem is scope creep. Contest it in your report (finding number +
+one line of evidence) and move on to the real findings. Only facts are
+contestable, never judgment calls; a contest without concrete evidence
+will be ignored.
 
 APPROACH DIRECTIVE (diversity burst only):
 {all failed approaches so far, one `approach:` line each, verbatim — or
@@ -64,6 +70,9 @@ REPORT BACK (exactly this shape, nothing more):
   from step 2>
 - files: <comma-separated files created/modified>
 - facts: <only if a PROJECT FACTS line is wrong/missing: the correction>
+- contested: <only on retry, only if a prior finding is factually wrong:
+  the finding number + one line of evidence (file:line or command output).
+  Omit otherwise.>
 - blocker: <only if BLOCKED: one line — what and why>
 
 ## Template B — Verifier (light tier)
@@ -80,6 +89,9 @@ TASK & ACCEPTANCE CRITERIA:
 IMPLEMENTER REPORT:
 {implementer's report}
 
+CONTESTED FINDINGS (retry only):
+{contested: lines from the implementer's report, or "none"}
+
 CHECKS (mechanical):
 1. Re-run the tests yourself. They must pass.
 2. Map criteria → tests: every acceptance criterion has at least one test
@@ -87,18 +99,25 @@ CHECKS (mechanical):
 3. Secret scan: no hardcoded credentials/keys/tokens in changed files.
 4. TDD evidence: the implementer's failed-first output is present and
    plausible for these tests.
+5. Contested findings: for each one, re-derive the fact yourself, then
+   either confirm the finding (say why the evidence doesn't hold) or drop
+   it — a dropped finding must not count against this verdict. Ignore
+   contests that dispute a judgment call or carry no concrete evidence.
 
 REPORT BACK (exactly this shape):
 - verdict: PASS | FAIL
 - note: <one line>
+- contested: <only if contested findings were passed in: "#N confirmed —
+  <why>" or "#N dropped — <why>", one line each>
 - findings: <only if FAIL: numbered, one line each, actionable — the next
   implementer sees these verbatim>
 
 ## Template D — Heavy Panel Verifier (one lens per dispatch)
 
-Dispatched three times in one message for a heavy task, once per lens.
-Only the correctness lens runs commands; the other two lenses are
-read-only, which is what makes the parallel dispatch safe.
+Dispatched once per lens for a heavy task, in two waves: security +
+test-integrity together (read-only, safe in parallel), then correctness
+alone — it runs commands and briefly stashes the implementation for the
+mechanical failed-first check, so it can never run beside a reader.
 
 You are one lens of a three-lens verification panel checking a task
 implementation. You did not write it. Trust nothing in the implementer's
@@ -115,13 +134,34 @@ TASK & ACCEPTANCE CRITERIA:
 IMPLEMENTER REPORT:
 {implementer's report}
 
+CONTESTED FINDINGS (retry only):
+{contested: lines from the implementer's report, or "none"}
+
 YOUR LENS: {correctness | security | test-integrity}
+
+ALL LENSES — contested findings: if a contested finding falls in your
+lens, re-derive the fact yourself, then either confirm it (say why the
+evidence doesn't hold) or drop it — a dropped finding must not count
+against this verdict. Ignore contests that dispute a judgment call or
+carry no concrete evidence. Contested findings outside your lens are not
+yours to resolve.
 
 CHECKS — correctness lens (the only lens that runs commands):
 1. Re-run the tests yourself. They must pass.
 2. Map criteria → tests: every acceptance criterion has at least one test
    that would fail if the criterion were violated.
 3. Scope creep: anything built that the acceptance criteria don't ask for.
+4. Mechanical failed-first (git repositories only): from the implementer's
+   files list, take the implementation files (everything that isn't a test
+   file) and stash exactly those — `git stash push -u -- <impl files>`.
+   Re-run the tests: the tests covering this task's criteria must now FAIL
+   (an import/module-not-found error counts as failing). Then restore
+   immediately with `git stash pop` — before writing your report, before
+   anything else; if the pop errors, stop and put the stash state in your
+   note rather than leaving the tree without the implementation. Tests
+   that still pass without the implementation don't exercise it: FAIL,
+   naming those tests. No implementation files in the list, or not a git
+   repository → skip this check and say so in your note.
 
 CHECKS — security lens (read-only, never run the test suite):
 1. Secret scan: no hardcoded credentials/keys/tokens in changed files.
@@ -130,7 +170,9 @@ CHECKS — security lens (read-only, never run the test suite):
 
 CHECKS — test-integrity lens (read-only, never run the test suite):
 1. TDD evidence: the implementer's failed-first output is present and
-   plausible for these tests.
+   plausible for these tests. (Judge the report text only — the
+   correctness lens re-proves failed-first mechanically in git repos;
+   never touch the working tree yourself.)
 2. Test-gaming detection: open the tests. Flag empty tests, tests with no
    assertions, tests that mock away the behavior under test.
 
@@ -138,6 +180,8 @@ REPORT BACK (exactly this shape):
 - lens: <your lens>
 - verdict: PASS | FAIL
 - note: <one line>
+- contested: <only if a contested finding fell in your lens: "#N confirmed
+  — <why>" or "#N dropped — <why>", one line each>
 - findings: <only if FAIL: numbered, one line each, actionable — the next
   implementer sees these verbatim>
 

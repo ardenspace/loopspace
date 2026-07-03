@@ -80,12 +80,18 @@ killed session, a `/clear`, or a crash never loses more than the last task's pro
   mechanical baseline: re-run the tests, map every acceptance criterion to a test that
   would fail if it were violated, scan changed files for hardcoded secrets, and check
   that the implementer's failed-first TDD evidence is present and plausible. Heavy tasks
-  get a **three-lens panel** — correctness (tests, criteria mapping, scope creep),
-  security (secrets, injection surfaces, trust boundaries), and test-integrity (TDD
-  evidence, test-gaming detection: empty tests, assertion-free tests, tests that mock
-  away the behavior under test) — dispatched in parallel, and a PASS requires all three
-  lenses to pass. The lenses are complementary coverage, not votes: a security FAIL
-  cannot be outvoted by two other PASSes.
+  get a **three-lens panel** — correctness (tests, criteria mapping, scope creep, and a
+  mechanical failed-first proof: stash the implementation files, watch the task's tests
+  actually fail without them, restore), security (secrets, injection surfaces, trust
+  boundaries), and test-integrity (TDD evidence, test-gaming detection: empty tests,
+  assertion-free tests, tests that mock away the behavior under test). The two read-only
+  lenses go out in parallel, then correctness runs alone — a lens that stashes the tree
+  can never run beside a reader — and a PASS requires all three lenses to pass. The
+  lenses are complementary coverage, not votes: a security FAIL cannot be outvoted by
+  two other PASSes. And findings flow both ways: a retry implementer that can prove a
+  finding factually wrong (file:line, command output) contests it instead of "fixing" a
+  non-problem; the next verifier must explicitly confirm or drop every contested
+  finding, and a dropped finding never reaches the next retry.
 - **Staged TDD contract with failed-first evidence.** Implementers work in three stages:
   understand the task's contract (contradictory or guess-requiring criteria mean
   reporting BLOCKED, not improvising), plan the change (files, test list, approach),
@@ -101,7 +107,9 @@ killed session, a `/clear`, or a crash never loses more than the last task's pro
   three-lens panel. When a task's risk is ambiguous, the plan is supposed to tag it
   heavy, and the plan review panel checks that the tags are honest.
 - **Escalation before halting.** A failing task climbs a ladder — findings-carrying
-  retries, cause classification, one re-plan if the plan is at fault, a diversity burst
+  retries, cause classification (journaled with the verbatim verifier-finding lines that
+  justify it — a cause without quotable evidence defaults to the burst, the only branch
+  that is cheap to be wrong about), one re-plan if the plan is at fault, a diversity burst
   of approach-forced candidates if the task is just stubborn — and only halts the run
   when the whole ladder is exhausted, or immediately when the cause is one no retry can
   fix: a spec contradiction (`spec-gap` — agents never modify the spec, it's the human's
