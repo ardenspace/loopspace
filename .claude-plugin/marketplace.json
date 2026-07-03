@@ -1,5 +1,6 @@
 {
   "name": "loopspace",
+  "description": "Spec-driven autonomous harness: rigorously verified specs and plans, then an autonomous implement-verify loop with TDD, fresh subagents per task, and disk-based resumable state.",
   "owner": {
     "name": "ardenspace"
   },
