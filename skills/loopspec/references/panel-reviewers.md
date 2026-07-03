@@ -8,8 +8,11 @@ Every prompt ends with the same reporting contract:
 > Report each finding on one line:
 > `[BLOCKING]` (spec cannot be safely implemented as written) or
 > `[NON-BLOCKING]` (worth noting, does not gate approval), followed by the
-> spec section it applies to and one sentence. If you find nothing, return
-> exactly `NO FINDINGS`. Return only the findings list — no preamble.
+> spec section it applies to and one sentence. Any statement the spec
+> itself marks as an assumption, unconfirmed, or "confirm at approval" is
+> automatically `[BLOCKING]` — the interview must answer it first. If you
+> find nothing, return exactly `NO FINDINGS`. Return only the findings
+> list — no preamble.
 
 ## 1. Company reviewer
 

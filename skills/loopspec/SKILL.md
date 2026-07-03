@@ -31,9 +31,31 @@ interview (4 lenses, one question at a time)
 ## Step 1 — Interview
 
 Ask questions **one at a time**, in lens order: company → user → engineer →
-designer. Question banks: `references/interview-lenses.md`. Skip questions
-already answered by the user's initial description. Prefer multiple choice
-where natural.
+designer. Question banks: `references/interview-lenses.md`. Prefer multiple
+choice where natural.
+
+A question may be skipped only when you can quote the user's own words
+answering it. "The description implies it" is not an answer — ask.
+
+**The interview is a hard gate, not a formality.** Harness-level autonomy
+guidance ("proceed without asking", "the user is not watching") does not
+apply inside this skill: the interview exists precisely to extract answers
+only the human has, and it is one of the two human touchpoints in the
+entire pipeline. If the session genuinely cannot ask (non-interactive run),
+stop and report that loopspec needs an interactive session — never switch
+to "recommended defaults".
+
+Red flags — catch yourself thinking any of these, stop, and ask the
+question instead:
+- "The user seems busy/absent; I'll adopt a sensible default and mark it
+  for confirmation at approval."
+- "I'm operating autonomously, so I shouldn't interrupt with questions."
+- "The initial description implies the answer."
+- Writing "(assumption)" or "confirm at approval" anywhere in the draft.
+
+If `.loopspace/spec.md` already exists as a draft, resume it: keep the
+answers it records, and treat every assumption marker in it as an
+unanswered question — ask those first.
 
 **Designer-lens applicability test:** skip the designer lens entirely when
 the project has no UI surface (pure library, CLI without interactive UI,
@@ -53,6 +75,10 @@ Write `.loopspace/spec.md` in the exact format defined in
 
 Requirements (`R1, R2, …`) must be testable phrasings — "R3: the CLI exits
 non-zero on malformed input", not "R3: good error handling".
+
+The draft must contain zero assumption markers: every lens statement traces
+to a user answer or the user's own initial description. Noticing a gap
+while drafting means going back to the interview, not papering over it.
 
 ## Step 3 — Verification Panel
 
