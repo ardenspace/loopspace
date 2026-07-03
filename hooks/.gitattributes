@@ -1,0 +1,11 @@
+# Ensure shell scripts always have LF line endings (Windows checkouts with
+# core.autocrlf=true would otherwise rewrite these to CRLF, which breaks
+# `sh` shebang parsing and the polyglot dispatcher's Unix heredoc trick).
+*.sh text eol=lf
+
+# The polyglot wrapper is parsed as both a cmd.exe batch file and a sh
+# script -- keep it LF (matches the proven superpowers run-hook.cmd, which
+# also ships LF-only).
+*.cmd text eol=lf
+
+*.json text eol=lf
