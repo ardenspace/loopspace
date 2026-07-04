@@ -85,12 +85,19 @@ is drafting) → `executing` (set at plan approval) → `halted` or `complete`.
 The file exists from the moment loopspec starts drafting, so a crash at any
 pipeline stage leaves a resumable marker on disk.
 
-Before plan approval, state.md is header-only:
+Before plan approval, state.md is header-only. The three branch fields
+appear at spec approval in git projects; before approval, and in non-git
+projects, they are absent — and their absence is the signal for every
+skill to skip all branch logic:
 
 ```markdown
 # Loopspace State
 version: 1
 run_status: spec            # spec | planning | executing | halted | complete
+base_branch: main                 # branch the run forked from; merge-back target
+run_branch: loopspace/<slug>      # per-run base branch, created at spec approval
+current_branch: loopspace/<slug>  # where work happens now; looprun moves it to
+                                  # loopspace/<slug>/phase-<N> as phases open
 ```
 
 From plan approval on, the full form, rewritten by looprun after every task:
@@ -101,6 +108,9 @@ version: 1
 run_status: executing
 current_phase: 2
 current_task: 2.3
+base_branch: main
+run_branch: loopspace/feat-x
+current_branch: loopspace/feat-x/phase-2
 
 ## Project Facts
 - test: <command that runs the test suite>
@@ -190,6 +200,10 @@ after its content is journaled
 version: 1
 written: <YYYY-MM-DD>
 trigger: spec-gap           # task-stall | phase-stall | spec-gap | external-blocker
+current_branch: loopspace/<slug>/phase-3   # git projects only
+last_verified_phase: loopspace/<slug>/phase-2   # newest phase branch whose
+                            # boundary verification passed, or "none" —
+                            # lets the human merge verified work only
 
 ## Progress
 <what is done, by phase/task id>
