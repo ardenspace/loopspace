@@ -112,9 +112,24 @@ Present: the draft location, a summary of what changed across panel rounds,
 and every remaining non-blocking finding. Ask the human to read
 `.loopspace/spec.md` and approve or request changes.
 
-On approval: set `status: approved`, fill the `## Approval` section with
-today's date and the open non-blocking findings, and suggest running
-`/loopplan`.
+On approval:
+
+1. Set `status: approved`, fill the `## Approval` section with today's
+   date and the open non-blocking findings.
+2. **Branch + checkpoint (git repositories only):** derive `<slug>` from
+   the spec title (kebab-case). If `loopspace/<slug>` already exists — a
+   stale earlier run — ask the human whether to delete it, reuse it, or
+   pick a different slug; never decide alone (you are at a human
+   touchpoint, use it). Create and check out `loopspace/<slug>` from the
+   currently checked-out branch, then record in state.md: `base_branch:`
+   (the branch you forked from), `run_branch:` and `current_branch:`
+   (both `loopspace/<slug>`). Commit with **only** the loopspace files
+   staged — `git add .loopspace/spec.md .loopspace/state.md` — message
+   `loopspace: spec approved — <slug>`. Unrelated working-tree changes
+   are never swept into an approval commit. In a non-git project, skip
+   this step entirely: the absent branch fields in state.md are how every
+   downstream skill knows to skip branch logic too.
+3. Suggest running `/loopplan`.
 
 ## Rules
 
