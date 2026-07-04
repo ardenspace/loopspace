@@ -53,8 +53,9 @@ Stacked phase branches under a per-run base branch:
 ### loopspec
 
 - On approval: create `loopspace/<slug>` from the current branch, then commit
-  **only** `.loopspace/spec.md` (stage that path alone — never sweep unrelated
-  working-tree changes). Message: `loopspace: spec approved — <slug>`.
+  **only** `.loopspace/` files (`spec.md` plus `state.md`, which gains the
+  branch fields at the same moment — never sweep unrelated working-tree
+  changes). Message: `loopspace: spec approved — <slug>`.
 - Branch-name collision (a stale `loopspace/<slug>` from an earlier run): detect
   before creating and ask the human — spec stage is interactive, the human is
   present.
@@ -63,7 +64,9 @@ Stacked phase branches under a per-run base branch:
 
 ### loopplan
 
-- On approval: commit **only** `.loopspace/plan.md` on the run base branch.
+- On approval: commit **only** `.loopspace/` files (`plan.md`, the rewritten
+  `state.md`, the initialized `journal.md`) on the run base branch, so the
+  full ready-to-run state is checkpointed before autonomy starts.
   Message: `loopspace: plan approved — <slug>`.
 
 ### state.md (state-format.md update)
