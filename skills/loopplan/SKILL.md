@@ -10,7 +10,10 @@ precision set here is the quality ceiling of the autonomous loop — each
 criterion becomes a TDD test.
 
 Precondition: `.loopspace/spec.md` exists with `status: approved`. If not,
-stop and suggest `/loopspec`.
+stop and suggest `/loopspec`. If state.md records branch fields (git
+projects), make sure `current_branch` is checked out before touching any
+file — a fresh session may start wherever the human left the repo; check
+it out if it isn't.
 
 If `.loopspace/plan.md` already exists as a draft, resume it: keep its
 decomposition and re-enter at Step 2 — panel results are not persisted on
@@ -71,11 +74,17 @@ approval — after this, the loop runs autonomously.** On approval:
 2. Rewrite `.loopspace/state.md` in its full form (state.md section of the
    format doc): `run_status: executing`, `current_phase: 1`,
    `current_task:` the first task's id, every task `pending` with
-   `attempts: 0`. Seed `## Project Facts` (test command, build/run command,
+   `attempts: 0`, and the three branch fields carried over unchanged (git
+   projects). Seed `## Project Facts` (test command, build/run command,
    stack) from the spec's Engineer Lens — "none yet" is a valid value for a
    greenfield project.
 3. Initialize empty `.loopspace/journal.md` (header + version line).
-4. Suggest running `/looprun`.
+4. **Checkpoint (git repositories only):** commit with only the loopspace
+   files staged — `git add .loopspace/plan.md .loopspace/state.md
+   .loopspace/journal.md` — message `loopspace: plan approved — <slug>`,
+   so the loop's full ready-to-run state is checkpointed on the run branch
+   before autonomy starts.
+5. Suggest running `/looprun`.
 
 ## Rules
 
