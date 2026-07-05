@@ -29,6 +29,11 @@ only `.loopspace/` can continue exactly. This skill is that read path.
 - Every file's `version:` is one you understand (currently `1`). Unknown
   version → stop and report; do not guess.
 - `current_task` in state.md exists in plan.md.
+- state.md has branch fields → the checked-out branch must equal
+  `current_branch`; if it doesn't, check out `current_branch` before
+  continuing — a fresh session starts wherever the human left the repo,
+  and continuing on the wrong branch scatters checkpoints. (No branch
+  fields → non-git project → skip.)
 - No task is `in_progress` with a journal PASS entry (a crash between
   verifier PASS and state update — if found, mark it done, journal the
   correction, continue).
