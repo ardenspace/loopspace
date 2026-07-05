@@ -82,8 +82,9 @@ approval — after this, the loop runs autonomously.** On approval:
 4. **Checkpoint (git repositories only):** commit with only the loopspace
    files staged — `git add .loopspace/plan.md .loopspace/state.md
    .loopspace/journal.md` — message `loopspace: plan approved — <slug>`,
-   so the loop's full ready-to-run state is checkpointed on the run branch
-   before autonomy starts.
+   where `<slug>` is read from `run_branch` in state.md, never re-derived
+   from the spec title — so the loop's full ready-to-run state is
+   checkpointed on the run branch before autonomy starts.
 5. Suggest running `/looprun`.
 
 ## Rules

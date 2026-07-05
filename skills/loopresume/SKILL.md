@@ -32,8 +32,12 @@ only `.loopspace/` can continue exactly. This skill is that read path.
 - state.md has branch fields → the checked-out branch must equal
   `current_branch`; if it doesn't, check out `current_branch` before
   continuing — a fresh session starts wherever the human left the repo,
-  and continuing on the wrong branch scatters checkpoints. (No branch
-  fields → non-git project → skip.)
+  and continuing on the wrong branch scatters checkpoints. One exception:
+  if the checked-out branch is a *newer* phase branch than `current_branch`
+  (e.g. `…/phase-3` checked out while state.md still says `…/phase-2`), a
+  crash caught the run mid phase-hop — keep the newer branch and fix
+  `current_branch` in state.md to match; never check out backwards. (No
+  branch fields → non-git project → skip.)
 - No task is `in_progress` with a journal PASS entry (a crash between
   verifier PASS and state update — if found, mark it done, journal the
   correction, continue).

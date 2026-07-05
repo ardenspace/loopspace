@@ -28,7 +28,7 @@ Stacked phase branches under a per-run base branch:
 
 ```
 (start branch, e.g. main)
-  └→ loopspace/<slug>                  ← created at loopspec approval
+  └→ loopspace/<slug>/run              ← created at loopspec approval
        ├─ "loopspace: spec approved — <slug>"
        ├─ "loopspace: plan approved — <slug>"     ← at loopplan approval
        └→ loopspace/<slug>/phase-1     ← created when looprun first enters
@@ -52,13 +52,13 @@ Stacked phase branches under a per-run base branch:
 
 ### loopspec
 
-- On approval: create `loopspace/<slug>` from the current branch, then commit
+- On approval: create `loopspace/<slug>/run` from the current branch, then commit
   **only** `.loopspace/` files (`spec.md` plus `state.md`, which gains the
   branch fields at the same moment — never sweep unrelated working-tree
   changes). Message: `loopspace: spec approved — <slug>`.
-- Branch-name collision (a stale `loopspace/<slug>` from an earlier run): detect
-  before creating and ask the human — spec stage is interactive, the human is
-  present.
+- Branch-name collision (stale `loopspace/<slug>/*` branches from an earlier
+  run): detect before creating and ask the human — spec stage is interactive,
+  the human is present.
 - A spec that gets abandoned costs one branch deletion; the start branch never
   sees it.
 
@@ -76,7 +76,7 @@ Three new fields:
 | Field | Meaning |
 |---|---|
 | `base_branch` | Branch the run forked from; merge-back target |
-| `run_branch` | `loopspace/<slug>` |
+| `run_branch` | `loopspace/<slug>/run` |
 | `current_branch` | Branch work is happening on now |
 
 state.md is created by loopspec, which sets all three at approval
@@ -99,7 +99,8 @@ are absent, which is also the signal for every other skill to skip branch logic.
   verified phase branch**, enabling a partial merge of verified work.
 - Rollback (`git checkout -- .` + `git clean -fd`), diversity burst, and all
   other git logic operate within the current branch — no change.
-- Still never pushes.
+- Never push or merge mid-run; the only moment either happens is the
+  run-complete report, on an explicit human choice.
 
 ### loopresume
 
@@ -112,9 +113,13 @@ are absent, which is also the signal for every other skill to skip branch logic.
   already guards checkpoint commits. Nothing else changes.
 - **Start branch is not main:** handled by design — `base_branch` records
   whatever was checked out.
-- **Dirty working tree at approval time:** approval commits stage only their own
-  `.loopspace/` file, so unrelated changes stay untouched in the tree (they carry
-  over to the new branch checkout as uncommitted changes, as git normally does).
+- **Dirty working tree at approval time:** unrelated uncommitted changes are
+  not safe to carry into a run — the loop's rollbacks and resets assume every
+  change in the tree belongs to the run (a reset can destroy a carried-over
+  file; a task commit can sweep one in). So before creating the branch,
+  loopspec tells the human and asks them to commit, stash, or discard the
+  unrelated changes first. Approval commits still stage only their own
+  `.loopspace/` files.
 
 ## Non-Goals
 

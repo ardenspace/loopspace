@@ -34,13 +34,19 @@ below. `run_status: complete` → say so, stop. All file formats:
   can always be rolled back to the last verified state. Never push or merge
   mid-run: the only moment either can happen is the run-complete report, on
   an explicit human choice.
-- **Branch discipline:** state.md's branch fields say where work happens.
-  On entry (git projects): check out `current_branch` if it isn't already
-  checked out. If `current_branch` still equals `run_branch` — no phase
-  branch yet — create `loopspace/<slug>/phase-1` from it, check it out, and
-  update `current_branch` in state.md. Task commits, rollbacks, and burst
-  resets all happen on the current phase branch. No branch fields in
-  state.md means a non-git project: skip all branch logic.
+- **Branch discipline (git projects):** state.md's branch fields say where
+  work happens; `<slug>` is read from `run_branch`, never re-derived from
+  the spec title. On entry, put the run on the right phase branch
+  mechanically: determine P, the phase number of the next non-done task in
+  plan order; ensure `loopspace/<slug>/phase-<P>` exists and is checked out
+  — create it from the current HEAD if it is missing — and set
+  `current_branch` to it in state.md. This is self-healing: it opens
+  phase-1 on the first entry, and it recovers both crash windows — a crash
+  between a phase boundary commit and the next branch's creation, and one
+  where the branch was created but `current_branch` was never updated. Task
+  commits, rollbacks, and burst resets all happen on the current phase
+  branch. No branch fields in state.md means a non-git project or a
+  pre-0.6.0 run: skip all branch logic.
 
 ## Per-Task Cycle
 
@@ -109,9 +115,13 @@ next task = first non-done task in plan order
      1. Collect the `approach:` lines from every failed attempt.
      2. Up to 3 candidates, strictly one at a time (they share one
         working tree — never parallel). Before each: in a git repo,
-        reset to the last checkpoint (`git checkout -- .` +
-        `git clean -fd`); outside git, tell the candidate leftover
-        files from failed attempts may exist and are theirs to replace.
+        reset to the last checkpoint but exclude the tracked state dir
+        (`git checkout -- . ':(exclude).loopspace'` +
+        `git clean -fd -e .loopspace`) — a plain reset would revert the
+        attempts counter, FAIL journal entries, and the stall
+        classification now that `.loopspace/` is tracked; outside git,
+        tell the candidate leftover files from failed attempts may exist
+        and are theirs to replace.
         Dispatch a fresh implementer (template A) with the APPROACH
         DIRECTIVE section filled: all failed approaches verbatim, and
         the instruction to take a genuinely different one.
@@ -147,8 +157,9 @@ human resolved a halt:
 3. Reset the failed task: status `pending`, `attempts: 0`. Apply the
    decision if it changed the plan (via the re-plan path) — spec changes
    still mean going back through `/loopspec`, not patching here.
-4. Set `run_status: executing`, delete `report.md`, re-enter the per-task
-   cycle.
+4. Set `run_status: executing`, delete `report.md`, and (git projects)
+   check out `current_branch` — the human may have wandered branches while
+   resolving the halt — then re-enter the per-task cycle.
 
 ## Phase Boundary
 
@@ -160,20 +171,25 @@ When the last task of a phase is done:
    the per-task cycle with the findings). **Maximum 3 phase-verification
    rounds per phase** — fixing task A can break task B and ping-pong
    forever; a 4th FAIL halts (`report.md`, trigger: `phase-stall`).
-3. PASS → journal `[phase N] verified`; overwrite `handoff.md`
-   (trigger: `phase-boundary`), carrying forward every previous-handoff
-   item that is still true — phase 1's flaky-test warning must survive
-   into phase 3; commit the boundary (`loopspace: phase <N> verified`) so
-   the phase journal entry and fresh handoff are checkpointed, not riding
-   uncommitted into the next phase. Git projects: create
+3. PASS → do this for **every** phase, the last one included: journal
+   `[phase N] verified`; overwrite `handoff.md` (trigger: `phase-boundary`),
+   carrying forward every previous-handoff item that is still true — phase
+   1's flaky-test warning must survive into phase 3; commit the boundary
+   (`loopspace: phase <N> verified`) so the phase journal entry and fresh
+   handoff are checkpointed, not riding uncommitted into the next phase.
+   Then branch **only if a next phase exists** — git projects, create
    `loopspace/<slug>/phase-<N+1>` on that boundary commit, check it out,
-   and update `current_branch` in state.md — every phase branch tip stays
-   a named, verified pointer. Continue to the next phase.
-4. Last phase → `run_status: complete`, final journal entry, report
-   totals to the human (tasks, retries, re-plans). Git projects: the
-   run is over, so this report is a human touchpoint again — offer the
-   branch decision and perform whichever the human picks, never picking
-   for them:
+   and update `current_branch` in state.md, so each completed phase's tip
+   stays a named, verified pointer — and continue to the next phase. If
+   this was the last phase, create no new branch: go to step 4.
+4. Last phase → set `run_status: complete`, write the final journal entry,
+   and (git projects) make a final commit on the current phase branch —
+   message `loopspace: run complete — <slug>` — so `run_status: complete`
+   and the last journal entry are checkpointed and the merge or PR below
+   carries completed state, not `executing`. Then report totals to the
+   human (tasks, retries, re-plans). Git projects: the run is over, so
+   this report is a human touchpoint again — offer the branch decision and
+   perform whichever the human picks, never picking for them:
    - merge `current_branch` into `base_branch` as a regular merge commit
      (checkpoint history preserved; squashing is the human's own call
      outside the tool),

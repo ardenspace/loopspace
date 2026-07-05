@@ -99,9 +99,10 @@ killed session, a `/clear`, or a crash never loses more than the last task's pro
   implement until they pass. The journal entry for a task must show the failing-first
   evidence — a task without it hasn't actually proven anything.
 - **Git checkpoints and branch isolation.** In a git repository the whole run lives on
-  its own branch stack: spec approval creates `loopspace/<slug>` (spec and plan approvals
-  are committed there), and execution stacks one branch per phase
-  (`loopspace/<slug>/phase-N`), each tip a named, verified pointer. The orchestrator
+  its own branch stack: spec approval creates `loopspace/<slug>/run` (spec and plan
+  approvals are committed there), and execution stacks one branch per phase
+  (`loopspace/<slug>/phase-N`), so each completed phase's tip is a named, verified
+  pointer (the current phase's tip is still work in progress). The orchestrator
   commits after every verified task, so one bad task can always be rolled back to the
   last verified state instead of poisoning everything after it. Inside the loop a
   verifier PASS is the merge authority; the branch you started from is touched only at

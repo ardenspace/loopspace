@@ -25,7 +25,8 @@ interview (4 lenses, one question at a time)
   → verification panel (6 reviewer subagents, one lens each)
   → convergence loop: blocking findings? revise draft, re-panel (max 3 rounds)
   → present to human: draft + remaining non-blocking findings
-  → human approves → status: approved (frozen) → suggest /loopplan
+  → human approves → status: approved, branch + checkpoint commit
+  → suggest /loopplan
 ```
 
 ## Step 1 — Interview
@@ -117,18 +118,23 @@ On approval:
 1. Set `status: approved`, fill the `## Approval` section with today's
    date and the open non-blocking findings.
 2. **Branch + checkpoint (git repositories only):** derive `<slug>` from
-   the spec title (kebab-case). If `loopspace/<slug>` already exists — a
-   stale earlier run — ask the human whether to delete it, reuse it, or
-   pick a different slug; never decide alone (you are at a human
-   touchpoint, use it). Create and check out `loopspace/<slug>` from the
-   currently checked-out branch, then record in state.md: `base_branch:`
-   (the branch you forked from), `run_branch:` and `current_branch:`
-   (both `loopspace/<slug>`). Commit with **only** the loopspace files
-   staged — `git add .loopspace/spec.md .loopspace/state.md` — message
-   `loopspace: spec approved — <slug>`. Unrelated working-tree changes
-   are never swept into an approval commit. In a non-git project, skip
-   this step entirely: the absent branch fields in state.md are how every
-   downstream skill knows to skip branch logic too.
+   the spec title (kebab-case). First check the working tree: if it holds
+   unrelated uncommitted changes, tell the human and ask them to commit,
+   stash, or discard those first — the run's rollbacks and resets assume
+   every change in the tree belongs to the run, so a carried-over file
+   can be destroyed by a reset or swept into a task commit (you are at a
+   human touchpoint; asking is free). If any `loopspace/<slug>/*` branch
+   already exists — a stale earlier run — ask the human whether to delete
+   it, reuse it, or pick a different slug; never decide alone. Create and
+   check out `loopspace/<slug>/run` from the currently checked-out branch,
+   then record in state.md: `base_branch:` (the branch you forked from),
+   `run_branch:` and `current_branch:` (both `loopspace/<slug>/run`).
+   Commit with **only** the loopspace files staged — `git add
+   .loopspace/spec.md .loopspace/state.md` — message `loopspace: spec
+   approved — <slug>`. Unrelated working-tree changes are never swept into
+   an approval commit. In a non-git project, skip this step entirely: the
+   absent branch fields in state.md are how every downstream skill knows
+   to skip branch logic too.
 3. Suggest running `/loopplan`.
 
 ## Rules
