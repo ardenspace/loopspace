@@ -41,8 +41,9 @@ Stacked phase branches under a per-run base branch:
 - `<slug>` derives from the spec title (kebab-case).
 - Branch from the **currently checked-out branch**, whatever it is; record it as
   the merge-back target. No assumption that the start branch is `main`.
-- Phase branch N+1 is created on top of phase N's boundary commit, so each phase
-  branch tip is a verified, named pointer. On a mid-run halt this gives the human
+- Phase branch N+1 is created on top of phase N's boundary commit, so each
+  completed phase's branch tip is a verified, named pointer (the current
+  phase's tip is work in progress). On a mid-run halt this gives the human
   a "merge only up to the last verified phase" option by branch name, and leaves
   the door open to per-phase PRs on collaborative repos later.
 - Execution stays strictly sequential; this is history organization plus `main`
@@ -85,8 +86,11 @@ are absent, which is also the signal for every other skill to skip branch logic.
 
 ### looprun
 
-- **Entry:** if `current_branch` still equals `run_branch` (no phase branch
-  yet), create `loopspace/<slug>/phase-1` from it and update `current_branch`.
+- **Entry:** determine the phase number P of the next non-done task; ensure
+  `loopspace/<slug>/phase-<P>` exists and is checked out — create it from the
+  current HEAD if missing — and update `current_branch`. Mechanical and
+  self-healing: it covers first entry (no phase branch yet) and both
+  crash windows around a phase hop.
 - **Phase boundary:** phase verification PASS → boundary commit (existing) →
   create and switch to the next phase branch → update `current_branch` in
   state.md. Handoff/journal logic unchanged.
@@ -97,8 +101,11 @@ are absent, which is also the signal for every other skill to skip branch logic.
   touchpoint, so the no-mid-run-decisions premise holds.
 - **Halt:** report.md additionally names the current branch and the **last
   verified phase branch**, enabling a partial merge of verified work.
-- Rollback (`git checkout -- .` + `git clean -fd`), diversity burst, and all
-  other git logic operate within the current branch — no change.
+- Rollback, diversity burst, and all other git logic operate within the
+  current branch. The reset commands exclude `.loopspace/`
+  (`git checkout -- . ':(exclude).loopspace'` + `git clean -fd -e .loopspace`)
+  — now that the state files are tracked, a bare reset would revert the
+  attempts counter and the journal's failure evidence mid-escalation.
 - Never push or merge mid-run; the only moment either happens is the
   run-complete report, on an explicit human choice.
 
