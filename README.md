@@ -98,9 +98,16 @@ killed session, a `/clear`, or a crash never loses more than the last task's pro
   then TDD — write the tests from the acceptance criteria first, show them fail,
   implement until they pass. The journal entry for a task must show the failing-first
   evidence — a task without it hasn't actually proven anything.
-- **Git checkpoints.** In a git repository, the orchestrator commits after every verified
-  task, so one bad task can always be rolled back to the last verified state instead of
-  poisoning everything after it.
+- **Git checkpoints and branch isolation.** In a git repository the whole run lives on
+  its own branch stack: spec approval creates `loopspace/<slug>` (spec and plan approvals
+  are committed there), and execution stacks one branch per phase
+  (`loopspace/<slug>/phase-N`), each tip a named, verified pointer. The orchestrator
+  commits after every verified task, so one bad task can always be rolled back to the
+  last verified state instead of poisoning everything after it. Inside the loop a
+  verifier PASS is the merge authority; the branch you started from is touched only at
+  the run-complete report, where the human chooses: merge, open a PR, or leave the
+  branch. A halt report names the last verified phase branch, so partial merges of
+  verified work are one command.
 - **Light/heavy risk tiers.** The plan tags every task `light` (config, simple CRUD,
   markup, docs) or `heavy` (auth, core business logic, data migrations, anything touching
   a trust boundary). Light tasks get the cheap mechanical checklist; heavy tasks get the

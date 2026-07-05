@@ -1,5 +1,27 @@
 # Changelog
 
+## 0.6.0 — 2026-07-04
+
+Branch strategy + approval checkpoints, from the first collaborative-repo
+dogfood concern: the loop used to commit straight onto whatever branch was
+checked out, and approved specs/plans sat uncommitted in the working tree.
+
+- **Approval commits.** loopspec and loopplan now commit the artifact the
+  human just approved (`loopspace: spec approved — <slug>`, `loopspace:
+  plan approved — <slug>`), staging only `.loopspace/` files — the loop's
+  contract is checkpointed before the loop starts.
+- **Stacked phase branches.** Spec approval creates `loopspace/<slug>`
+  from the current branch; looprun stacks `loopspace/<slug>/phase-N` per
+  phase, so every phase tip is a named, verified pointer and the start
+  branch never sees unverified work. Inside the loop a verifier PASS is
+  the merge authority — no per-task merge questions — and the human merge
+  decision lives at the touchpoints that already exist: the run-complete
+  report offers merge / PR / leave-as-is, and a halt report names the
+  last verified phase branch for partial merges. state.md gains
+  `base_branch` / `run_branch` / `current_branch`; their absence (non-git
+  project) switches all branch logic off. Mid-run the loop still never
+  pushes and now explicitly never merges.
+
 ## 0.5.0 — 2026-07-03
 
 Three trust-to-mechanics conversions after the first real runs — each
