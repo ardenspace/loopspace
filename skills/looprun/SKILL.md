@@ -31,7 +31,16 @@ below. `run_status: complete` → say so, stop. All file formats:
   corrects a fact (`facts:` line), update state.md before the next dispatch.
 - **Git checkpoint:** if the project is a git repository, commit after every
   verifier PASS — message `loopspace: task <id> — <title>` — so one bad task
-  can always be rolled back to the last verified state. Never push.
+  can always be rolled back to the last verified state. Never push or merge
+  mid-run: the only moment either can happen is the run-complete report, on
+  an explicit human choice.
+- **Branch discipline:** state.md's branch fields say where work happens.
+  On entry (git projects): check out `current_branch` if it isn't already
+  checked out. If `current_branch` still equals `run_branch` — no phase
+  branch yet — create `loopspace/<slug>/phase-1` from it, check it out, and
+  update `current_branch` in state.md. Task commits, rollbacks, and burst
+  resets all happen on the current phase branch. No branch fields in
+  state.md means a non-git project: skip all branch logic.
 
 ## Per-Task Cycle
 
@@ -122,7 +131,10 @@ next task = first non-done task in plan order
    `external-blocker`). Do not burn retries on environment problems.
 
 Every halt, whatever the trigger, also sets the offending task's status to
-`failed` in state.md.
+`failed` in state.md. In a git repository, report.md additionally records
+`current_branch:` and `last_verified_phase:` (the newest phase branch whose
+boundary verification passed, or `none`) so the human can choose to merge
+only verified work.
 
 ## Halt-Resume (run_status: halted)
 
@@ -153,9 +165,20 @@ When the last task of a phase is done:
    item that is still true — phase 1's flaky-test warning must survive
    into phase 3; commit the boundary (`loopspace: phase <N> verified`) so
    the phase journal entry and fresh handoff are checkpointed, not riding
-   uncommitted into the next phase; continue to the next phase.
+   uncommitted into the next phase. Git projects: create
+   `loopspace/<slug>/phase-<N+1>` on that boundary commit, check it out,
+   and update `current_branch` in state.md — every phase branch tip stays
+   a named, verified pointer. Continue to the next phase.
 4. Last phase → `run_status: complete`, final journal entry, report
-   totals to the human (tasks, retries, re-plans).
+   totals to the human (tasks, retries, re-plans). Git projects: the
+   run is over, so this report is a human touchpoint again — offer the
+   branch decision and perform whichever the human picks, never picking
+   for them:
+   - merge `current_branch` into `base_branch` as a regular merge commit
+     (checkpoint history preserved; squashing is the human's own call
+     outside the tool),
+   - push the branch and open a PR against `base_branch`, or
+   - leave the branch as-is.
 
 ## Context Threshold (the 30% rule)
 
