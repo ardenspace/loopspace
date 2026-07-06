@@ -1,5 +1,34 @@
 # Changelog
 
+## 0.7.0 — 2026-07-06
+
+First backlog pass after the Lane C dogfood (ledger:
+`docs/backlog-2026-07-05.md`). A cost diagnosis on the run journal — 14/14
+tasks first-attempt PASS, verification = 62% of dispatches, both
+spend-limit hits inside verification waves — drove all three changes:
+
+- **Comment discipline (implementer).** Dogfood output ran 31% comments,
+  mostly restated acceptance criteria. Template A now rules: comments only
+  for constraints the code cannot show — never restating criteria,
+  narrating the next line, or justifying the change.
+- **Sharper risk-tag criteria.** A pure-domain task (haversine math, no
+  I/O) ran the full 3-lens panel with nothing for the security lens to
+  see. loopplan now tags pure in-memory logic (no I/O, no trust boundary,
+  no new dependency) `light` however central it is, and the heavy examples
+  name the real cases instead of "core business logic": state machines
+  with concurrency or partial-failure branches, native platform
+  integration, trust boundaries. The plan panel's tag-honesty check is now
+  bidirectional — over-tagging heavy is a [NON-BLOCKING] finding (a
+  three-lens panel on code with no security surface burns dispatches).
+- **Structural economy advisory (phase verifier).** A display-only map
+  screen grew to 7 files while three defense layers watched per-task scope
+  only — cumulative structural bloat was nobody's lens. Template C gains
+  an advisory check (files/indirection proportionate to what shipped;
+  acceptance-required seams like test-isolation fakes are exempt),
+  reported as `structure-note` and journaled verbatim. Advisory only —
+  it never turns a PASS into a FAIL; promotion to FAIL waits on repeat
+  observations.
+
 ## 0.6.0 — 2026-07-04
 
 Branch strategy + approval checkpoints, from the first collaborative-repo
