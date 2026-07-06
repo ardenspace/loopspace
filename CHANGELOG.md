@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.10.0 — 2026-07-06
+
+- **Spec-concern advisory (all verifiers).** The loop's rigor is capped by the
+  spec's quality: a contradictory spec halts (`spec-gap`), but a spec that is
+  consistent-yet-questionable verifies clean and gets built at 100% coverage.
+  Backlog item 5 resolved this trade-off on the advisory side — the unattended
+  loop is the product's core value, so no new human checkpoint. Every verifier
+  (light, heavy lenses, phase) can now report `spec-concern`: work that is
+  correctly implemented per the spec but questionable *as* spec design.
+  Concerns never affect a verdict, never trigger a halt, and are deliberately
+  kept out of every dispatch — a "the spec looks wrong" note in an
+  implementer's hands invites improvising around a frozen spec. They accumulate
+  verbatim in the journal and surface at the human's two reading touchpoints:
+  the halt report (new optional `## Spec concerns` section in report.md) and
+  the run-complete summary. Escalating to an opt-in human checkpoint stays
+  gated on observing that advisory isn't enough.
+
 ## 0.9.0 — 2026-07-06
 
 - **Plan-freshness advisory (phase verifier).** plan.md fixes every

@@ -113,6 +113,14 @@ REPORT BACK (exactly this shape):
 - note: <one line>
 - contested: <only if contested findings were passed in: "#N confirmed —
   <why>" or "#N dropped — <why>", one line each>
+- spec-concern: <advisory only, never affects the verdict: a requirement
+  or criterion that is internally consistent and correctly implemented —
+  so it is NOT a blocker and NOT a finding — but that you would question
+  as spec design (e.g. a stored-secret pattern the spec asked for, a flow
+  no user would want). One line each, naming the R-id or criterion. A
+  contradiction or guess-requiring criterion is never a concern — that is
+  the implementer's BLOCKED path. Omit if none — expected most of the
+  time.>
 - findings: <only if FAIL: numbered, one line each, actionable — the next
   implementer sees these verbatim>
 
@@ -186,6 +194,11 @@ REPORT BACK (exactly this shape):
 - note: <one line>
 - contested: <only if a contested finding fell in your lens: "#N confirmed
   — <why>" or "#N dropped — <why>", one line each>
+- spec-concern: <advisory only, never affects the verdict: a requirement
+  in your lens that is consistent and correctly implemented but that you
+  would question as spec design. One line each, naming the R-id or
+  criterion. Contradictions are the implementer's BLOCKED path, not a
+  concern. Omit if none — expected most of the time.>
 - findings: <only if FAIL: numbered, one line each, actionable — the next
   implementer sees these verbatim>
 
@@ -230,5 +243,10 @@ REPORT BACK (exactly this shape):
 - freshness-note: <advisory only, never a FAIL: next-phase task blocks
   that look stale, one line each starting with the task id — omit if
   none or no next phase>
+- spec-concern: <advisory only, never a FAIL: the phase is spec-compliant
+  and shippable, but something about what the spec asked for looks wrong
+  at integration level (a flow no user would want, a requirement that
+  fights the rest of the product). One line each. Omit if none — expected
+  most of the time.>
 - offending-task: <only if FAIL: the task id to re-open>
 - findings: <only if FAIL: numbered, one line each>

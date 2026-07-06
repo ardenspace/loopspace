@@ -87,7 +87,12 @@ next task = first non-done task in plan order
    fresh implementer that receives those findings (template A, findings
    section filled)
    Either way, journal any contested resolutions (`#N confirmed/dropped`);
-   a dropped finding is never carried into the retry's findings.
+   a dropped finding is never carried into the retry's findings. Journal
+   any `spec-concern` lines verbatim — they never affect the verdict, are
+   never carried into any dispatch (a "the spec looks wrong" note in an
+   implementer's hands invites improvising around a frozen spec), and
+   never trigger a halt. They wait in the journal for the human's next
+   reading touchpoint: the halt report or the run-complete report.
 ```
 
 ## Stall Policy (3-tier escalation)
@@ -144,7 +149,9 @@ Every halt, whatever the trigger, also sets the offending task's status to
 `failed` in state.md. In a git repository, report.md additionally records
 `current_branch:` and `last_verified_phase:` (the newest phase branch whose
 boundary verification passed, or `none`) so the human can choose to merge
-only verified work.
+only verified work. If the journal holds any `spec-concern` lines, list
+them in report.md under `## Spec concerns` — the halt is a human
+touchpoint, and concerns wait for exactly these.
 
 ## Halt-Resume (run_status: halted)
 
@@ -175,8 +182,9 @@ When the last task of a phase is done:
    rounds per phase** — fixing task A can break task B and ping-pong
    forever; a 4th FAIL halts (`report.md`, trigger: `phase-stall`).
 3. PASS → do this for **every** phase, the last one included: journal
-   `[phase N] verified` (append the verifier's `structure-note` and
-   `freshness-note` lines verbatim, if any); overwrite `handoff.md`
+   `[phase N] verified` (append the verifier's `structure-note`,
+   `freshness-note`, and `spec-concern` lines verbatim, if any); overwrite
+   `handoff.md`
    (trigger: `phase-boundary`), carrying forward every previous-handoff
    item that is still true — phase 1's flaky-test warning must survive
    into phase 3 — and copying any `freshness-note` lines into "Watch out
@@ -196,7 +204,10 @@ When the last task of a phase is done:
    message `loopspace: run complete — <slug>` — so `run_status: complete`
    and the last journal entry are checkpointed and the merge or PR below
    carries completed state, not `executing`. Then report totals to the
-   human (tasks, retries, re-plans). Git projects: the run is over, so
+   human (tasks, retries, re-plans), plus every `spec-concern` line from
+   the journal, verbatim — the loop built what the spec said; whether the
+   spec said the right thing is the human's question, and this is where
+   they get to ask it. Git projects: the run is over, so
    this report is a human touchpoint again — offer the branch decision and
    perform whichever the human picks, never picking for them:
    - merge `current_branch` into `base_branch` as a regular merge commit

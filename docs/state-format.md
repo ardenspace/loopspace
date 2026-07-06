@@ -150,6 +150,9 @@ version: 1
 - tdd-evidence: <test file>:<first-fail confirmed>
 - verifier: PASS — <one-line note>
 - files: <comma-separated changed files>
+- spec-concern: <optional, advisory — verbatim from the verifier: R-id or
+  criterion that is correctly implemented but questionable as spec design;
+  surfaces to the human in the halt or run-complete report>
 
 ## [2.3] attempt 1 — FAIL
 - verifier: FAIL — <finding driving the retry>
@@ -221,6 +224,12 @@ last_verified_phase: loopspace/<slug>/phase-2   # newest phase branch whose
 - A: <option + consequence>
 - B: <option + consequence>
 - C: <option + consequence>
+
+## Spec concerns
+<optional — omit when the journal has none. Verbatim `spec-concern` lines
+accumulated in the journal: spec-compliant work a verifier would question
+as spec design. Advisory for the human only — never a halt cause, never
+shown to implementers.>
 
 ## Awaiting
 Human decision. Re-run /looprun after resolving.

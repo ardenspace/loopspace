@@ -205,6 +205,17 @@ three-lens panel. The diversity burst is the same trade at the task level: it on
 candidates on tasks that already burned 3 attempts, where the alternative is halting and
 waiting for a human.
 
+**What if the spec itself is wrong?** A contradictory spec stops the run: implementers
+report BLOCKED instead of guessing, and the loop halts with a `spec-gap` report — agents
+never modify the spec. A spec that is consistent but *questionable* — the kind that
+verifies clean because the loop faithfully built what it said — can't halt anything, so
+verifiers have an advisory channel instead: a `spec-concern` line for work they'd pass
+but would question as spec design. Concerns never affect a verdict, never reach an
+implementer (a "the spec looks wrong" note invites improvising around a frozen spec),
+and never stop the loop; they accumulate in the journal and are shown to you at the next
+report you'd read anyway — a halt or the run-complete summary. The loop stays unattended;
+you still get to hear "this is what you asked for, but are you sure?"
+
 **Why can't it clear its own context?** Because a Claude Code session cannot clear its own
 context — that's a harness constraint, not a design choice. loopspace works around it by
 writing everything the next session needs to `.loopspace/` before the threshold, then
