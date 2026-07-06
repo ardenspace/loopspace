@@ -107,6 +107,48 @@ d="$(make_project executing)"
 out="$(LOOPSPACE_MAX_NOPROGRESS=abc LOOPSPACE_RESUME_CMD="true" sh "$SCRIPT" "$d" 2>&1)"; rc=$?
 [ "$rc" -eq 1 ] && echo "$out" | grep -qi "integer" && ok || fail "max-noprogress-nonnumeric (rc=$rc, out=$out)"
 
+# ---- executing: resume flips to halted on 1st call => never auto-resumed ----
+d="$(make_project executing)"
+mock="$(mktemp)"
+cat > "$mock" <<MOCK
+#!/bin/sh
+# mock resume: flip run_status to halted on the very first call.
+c="$d/.loopspace/count"
+n=\$(cat "\$c" 2>/dev/null || echo 0); n=\$((n+1)); echo "\$n" > "\$c"
+sed -i.bak 's/^run_status: .*/run_status: halted/' "$d/.loopspace/state.md"
+MOCK
+chmod +x "$mock"
+out="$(LOOPSPACE_RESUME_CMD="sh $mock" sh "$SCRIPT" "$d" 2>&1)"; rc=$?
+calls="$(cat "$d/.loopspace/count" 2>/dev/null || echo 0)"
+[ "$rc" -eq 0 ] && [ "$calls" -eq 1 ] && echo "$out" | grep -qi "halted" \
+  && ok || fail "halt-mid-supervision (rc=$rc, calls=$calls, out=$out)"
+
+# ---- executing: always-progress resume => absolute restart ceiling stops it ----
+d="$(make_project executing)"
+mock="$(mktemp)"
+cat > "$mock" <<MOCK
+#!/bin/sh
+# mock resume: always makes progress (journal grows), never finishes.
+# Safety escape: flip to complete after 10 calls so a missing ceiling cannot
+# hang the suite (assertion still fails RED: rc=0, calls=10).
+c="$d/.loopspace/count"
+n=\$(cat "\$c" 2>/dev/null || echo 0); n=\$((n+1)); echo "\$n" > "\$c"
+echo "## [1.\$n] attempt 1 — PASS" >> "$d/.loopspace/journal.md"
+if [ "\$n" -ge 10 ]; then
+  sed -i.bak 's/^run_status: .*/run_status: complete/' "$d/.loopspace/state.md"
+fi
+MOCK
+chmod +x "$mock"
+out="$(LOOPSPACE_MAX_RESTARTS=3 LOOPSPACE_RESUME_CMD="sh $mock" sh "$SCRIPT" "$d" 2>&1)"; rc=$?
+calls="$(cat "$d/.loopspace/count" 2>/dev/null || echo 0)"
+[ "$rc" -eq 1 ] && [ "$calls" -eq 3 ] && echo "$out" | grep -qi "MAX_RESTARTS" \
+  && ok || fail "restart-ceiling (rc=$rc, calls=$calls, out=$out)"
+
+# ---- non-numeric MAX_RESTARTS => fail fast, no launch ----
+d="$(make_project executing)"
+out="$(LOOPSPACE_MAX_RESTARTS=abc LOOPSPACE_RESUME_CMD="true" sh "$SCRIPT" "$d" 2>&1)"; rc=$?
+[ "$rc" -eq 1 ] && echo "$out" | grep -qi "integer" && ok || fail "max-restarts-nonnumeric (rc=$rc, out=$out)"
+
 echo "----"
 echo "PASS=$PASS FAIL=$FAIL"
 [ "$FAIL" -eq 0 ]

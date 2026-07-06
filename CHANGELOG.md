@@ -16,6 +16,12 @@
   read-only control layer. The interactive run keeps its mandatory `/clear`
   handoff; the supervisor is a separate path for truly unattended (overnight)
   runs and assumes a container/dedicated machine (`--dangerously-skip-permissions`).
+  Hardening: a SIGINT/SIGTERM trap stops the loop instead of relaunching past a
+  Ctrl-C, an absolute restart ceiling (`LOOPSPACE_MAX_RESTARTS`, default 50)
+  bounds token spend even when every restart "makes progress", an unrecognized
+  `run_status` is retried once before exiting (torn mid-rewrite reads survive),
+  and the progress signature now hashes the whole `state.md` so
+  `current_task` movement alone counts as progress.
 
 ## 0.10.0 — 2026-07-06
 
