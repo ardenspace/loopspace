@@ -190,12 +190,18 @@ Action도 헤드리스 구동. 비공식 뒷문이 아니다.
 
 ## Spike result
 
-TRACKED-OPEN — `claude -p "/loopresume"`가 헤드리스에서 슬래시 명령을 실제
-스킬로 해석하고 임계에서 exit하는지의 검증(구현 전 검증할 가정, 위 1단계)은
-이번 세션에서 실행하지 못했다: auto-mode 샌드박스가 중첩된
-`claude -p --dangerously-skip-permissions` 실행을 막았다. 따라서 출고된
-기본값(`claude -p '/loopresume' --dangerously-skip-permissions`)은 검증되지
-않은 가정 위에 서 있으며, 사용자의 첫 실제 무인 런에서 검증될 예정이다.
-가정이 틀린 것으로 판명되면 코드 변경 없이 `LOOPSPACE_RESUME_CMD`로 자연어
-프롬프트(예: "Run the loopresume skill and continue the run")를 넘기는 것이
-문서화된 폴백이다.
+**전반부 통과 (2026-07-06, toy-project 실전 런):** 사용자가 D:\toy-project
+(run_status: executing, 포인터 4.1)에서 `claude -p "/loopresume"
+--dangerously-skip-permissions`를 직접 실행 — 슬래시 명령이 헤드리스에서
+실제 스킬로 해석됐고, loopresume→looprun 재진입 후 태스크 4.1을 통째로
+완료(구현 + 3렌즈 heavy 패널 PASS + 저널 + 체크포인트 커밋 `8b77f2a`,
+18:25). 출고 기본값의 핵심 가정 확인. 관측된 UX 특성: `-p`는 턴 종료까지
+출력을 버퍼링하므로 터미널이 멈춘 것처럼 보인다 — 진행 확인은 journal.md
+tail 또는 git log로 한다(supervise.sh의 판별이 stdout이 아니라 state.md인
+이유와 같은 결).
+
+**후반부 TRACKED-OPEN:** 30% 임계에서 프로세스가 실제로 exit하는지(무한
+대기 없이)는 같은 런이 임계에 도달할 때 관측된다. 가정이 틀리면 코드 변경
+없이 `LOOPSPACE_RESUME_CMD`로 자연어 프롬프트를 넘기는 것이 문서화된
+폴백이다. (배경: 세션 내 검증은 auto-mode 샌드박스가 중첩
+`claude -p --dangerously-skip-permissions`를 막아 불가했다.)
