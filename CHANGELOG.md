@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.9.0 — 2026-07-06
+
+- **Plan-freshness advisory (phase verifier).** plan.md fixes every
+  phase's task decomposition upfront, so a late phase's tasks were written
+  blind to what earlier phases actually built — and the only correction
+  was the stall path, which costs three failures first. Backlog item 8's
+  observation gate stays (the Lane C run was too short to prove or refute
+  the failure mode), so this ships the instrument, not the fix: template C
+  now receives the next phase's task blocks and flags, as `freshness-note`
+  (advisory only, never a FAIL, never a re-plan trigger), criteria the
+  current code already satisfies, stale `files:` references, and conflicts
+  with constraints discovered this phase. Notes are journaled verbatim on
+  the `[phase N] verified` entry and carried into the handoff's "Watch out
+  for", so the flagged task's own implementer sees the suspicion — if it's
+  real, the existing blocked/stall routes handle it. Promotion to an early
+  re-plan trigger (or closing item 8) waits on what the notes show in the
+  next multi-phase dogfood.
+
 ## 0.8.0 — 2026-07-06
 
 - **`/loopupdate`.** One command to update the plugin: refreshes the

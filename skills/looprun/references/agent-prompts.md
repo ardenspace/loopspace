@@ -199,6 +199,8 @@ PROJECT FACTS:
 
 PHASE: {phase block from plan.md, including the phase acceptance line}
 TASKS COMPLETED: {task ids + one-line summaries from journal.md}
+NEXT PHASE: {next phase block from plan.md verbatim, task blocks included
+— or "none: this is the last phase"}
 
 CHECKS:
 1. Run the FULL test suite (not per-task subsets). All green.
@@ -212,11 +214,21 @@ CHECKS:
    it shipped? Flag files that could be merged and abstractions with a
    single caller. Do not flag seams the acceptance criteria required
    (test isolation, injected fakes).
+6. Plan freshness (advisory — never affects the verdict; skip if NEXT
+   PHASE is none): read the next phase's task blocks against the tree as
+   it now stands. Flag: acceptance criteria the current code already
+   satisfies, `files:` references that no longer match the real
+   structure, and task assumptions that conflict with constraints
+   discovered this phase. You are observing, not re-planning — never
+   propose a new decomposition.
 
 REPORT BACK (exactly this shape):
 - verdict: PASS | FAIL
 - note: <one line>
 - structure-note: <advisory only, never a FAIL: files/layers that look
   disproportionate, one line each — omit if none>
+- freshness-note: <advisory only, never a FAIL: next-phase task blocks
+  that look stale, one line each starting with the task id — omit if
+  none or no next phase>
 - offending-task: <only if FAIL: the task id to re-open>
 - findings: <only if FAIL: numbered, one line each>
