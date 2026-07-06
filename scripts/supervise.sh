@@ -36,6 +36,12 @@ read_status() {
   sed -n 's/^run_status:[[:space:]]*//p' "$STATE" 2>/dev/null | head -n 1 | tr -d '\r'
 }
 
+progress_sig() {
+  { sed -n '/^## Tasks/,$p' "$STATE" 2>/dev/null
+    wc -l < .loopspace/journal.md 2>/dev/null
+  } | cksum
+}
+
 prev_sig=""
 noprogress=0
 
@@ -53,9 +59,20 @@ while :; do
       notify "run HALTED — decision needed (see .loopspace/report.md)"
       exit 0 ;;
     executing)
-      # filled in Task 4
-      echo "supervise: executing branch not yet implemented" >&2
-      exit 2 ;;
+      sig="$(progress_sig)"
+      if [ "$sig" = "$prev_sig" ]; then
+        noprogress=$((noprogress + 1))
+        if [ "$noprogress" -ge "$MAX_NOPROGRESS" ]; then
+          notify "run STUCK — no progress across $MAX_NOPROGRESS restarts ($PROJECT)"
+          exit 1
+        fi
+      else
+        noprogress=0
+      fi
+      prev_sig="$sig"
+      # eval so quoted args in RESUME_CMD parse correctly; SC2086 intentional
+      eval "$RESUME_CMD"
+      ;;
     *)
       notify "run_status='${status:-<none>}' — not an executing run, exiting ($PROJECT)"
       exit 1 ;;

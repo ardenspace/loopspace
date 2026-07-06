@@ -68,6 +68,40 @@ cap="$(mktemp)"
 out="$(CURL_CAPTURE="$cap" PATH="$shim:$PATH" sh "$SCRIPT" "$d" 2>&1)"; rc=$?
 [ "$rc" -eq 0 ] && [ ! -s "$cap" ] && ok || fail "no-telegram-env (rc=$rc, cap=$(cat "$cap"))"
 
+# ---- executing: resume advances state to complete after 3 restarts ----
+d="$(make_project executing)"
+mock="$(mktemp)"
+cat > "$mock" <<MOCK
+#!/bin/sh
+# mock resume: append a journal line each call; flip to complete on the 3rd.
+c="$d/.loopspace/count"
+n=\$(cat "\$c" 2>/dev/null || echo 0); n=\$((n+1)); echo "\$n" > "\$c"
+echo "## [1.\$n] attempt 1 — PASS" >> "$d/.loopspace/journal.md"
+if [ "\$n" -ge 3 ]; then
+  sed -i.bak 's/^run_status: .*/run_status: complete/' "$d/.loopspace/state.md"
+fi
+MOCK
+chmod +x "$mock"
+out="$(LOOPSPACE_RESUME_CMD="sh $mock" sh "$SCRIPT" "$d" 2>&1)"; rc=$?
+calls="$(cat "$d/.loopspace/count" 2>/dev/null || echo 0)"
+[ "$rc" -eq 0 ] && [ "$calls" -eq 3 ] && echo "$out" | grep -qi "complete" \
+  && ok || fail "executing-restart (rc=$rc, calls=$calls, out=$out)"
+
+# ---- executing: no progress => STUCK after MAX_NOPROGRESS restarts ----
+d="$(make_project executing)"
+mock="$(mktemp)"
+cat > "$mock" <<MOCK
+#!/bin/sh
+# mock resume that never changes state (stuck)
+c="$d/.loopspace/count"
+n=\$(cat "\$c" 2>/dev/null || echo 0); echo "\$((n+1))" > "\$c"
+MOCK
+chmod +x "$mock"
+out="$(LOOPSPACE_MAX_NOPROGRESS=2 LOOPSPACE_RESUME_CMD="sh $mock" sh "$SCRIPT" "$d" 2>&1)"; rc=$?
+calls="$(cat "$d/.loopspace/count" 2>/dev/null || echo 0)"
+[ "$rc" -eq 1 ] && [ "$calls" -eq 2 ] && echo "$out" | grep -qi "stuck" \
+  && ok || fail "executing-stuck (rc=$rc, calls=$calls, out=$out)"
+
 echo "----"
 echo "PASS=$PASS FAIL=$FAIL"
 [ "$FAIL" -eq 0 ]
