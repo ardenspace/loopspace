@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.11.0 — 2026-07-06
+
+- **Headless supervisor (opt-in, backlog item 6 v1).** A new `/loopsupervise`
+  skill and `scripts/supervise.sh` let an unattended run restart itself across
+  context thresholds and crashes: each `claude -p "/loopresume"` is a fresh
+  process, so process death is the context clear — no `/clear` to type. The
+  supervisor reads only `.loopspace/state.md` (`run_status`): `executing`
+  relaunches, `complete`/`halted` notify and exit, and a halt is **never**
+  auto-resumed (its whole meaning is "await a human"). A no-progress guard
+  stops after two restarts that change nothing. Optional Telegram alerts fire
+  on halt/complete when `LOOPSPACE_TG_BOT_TOKEN` and `LOOPSPACE_TG_CHAT_ID`
+  are set; otherwise it logs to stdout. Nothing in the existing loop changed —
+  looprun, loopresume, and the state format are untouched; the supervisor is a
+  read-only control layer. The interactive run keeps its mandatory `/clear`
+  handoff; the supervisor is a separate path for truly unattended (overnight)
+  runs and assumes a container/dedicated machine (`--dangerously-skip-permissions`).
+
 ## 0.10.0 — 2026-07-06
 
 - **Spec-concern advisory (all verifiers).** The loop's rigor is capped by the

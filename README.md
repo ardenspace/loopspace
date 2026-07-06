@@ -150,6 +150,18 @@ restart at a stable point — task cycle done or handoff written.)
   handoff is a real manual step, not a formality. It's typing, not judgment, but you have
   to do it.
 
+**Unattended runs (opt-in).** That 30% handoff is a real manual step — fine
+when you're at the keyboard, impossible overnight. For truly unattended runs
+there's `/loopsupervise`: it prints a one-liner you run in a separate
+terminal, and a small shell supervisor (`scripts/supervise.sh`) relaunches the
+run each time it hits the threshold or crashes — a fresh `claude -p
+"/loopresume"` process is its own clear, so nothing needs typing. It notifies
+you (Telegram, or stdout) only at the moments that matter: the run completes,
+or it halts and needs your decision — a halt is never auto-resumed. This is a
+power-user path that runs `claude` with `--dangerously-skip-permissions`, so
+it assumes a container or a machine you trust; the normal interactive flow and
+its manual handoff are unchanged.
+
 ## What happens when a task fails
 
 You don't do anything — the escalation ladder is automatic, and every rung is journaled:
