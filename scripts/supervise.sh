@@ -17,6 +17,15 @@ PROJECT="${1:-.}"
 MAX_NOPROGRESS="${LOOPSPACE_MAX_NOPROGRESS:-2}"
 RESUME_CMD="${LOOPSPACE_RESUME_CMD:-claude -p '/loopresume' --dangerously-skip-permissions}"
 
+case "$MAX_NOPROGRESS" in
+  ''|*[!0-9]*)
+    echo "supervise: LOOPSPACE_MAX_NOPROGRESS must be a positive integer (got '$MAX_NOPROGRESS')" >&2
+    exit 1 ;;
+  0)
+    echo "supervise: LOOPSPACE_MAX_NOPROGRESS must be >= 1 (got 0)" >&2
+    exit 1 ;;
+esac
+
 cd "$PROJECT" 2>/dev/null || { echo "supervise: cannot cd to '$PROJECT'" >&2; exit 1; }
 STATE=".loopspace/state.md"
 

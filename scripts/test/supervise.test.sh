@@ -102,6 +102,11 @@ calls="$(cat "$d/.loopspace/count" 2>/dev/null || echo 0)"
 [ "$rc" -eq 1 ] && [ "$calls" -eq 2 ] && echo "$out" | grep -qi "stuck" \
   && ok || fail "executing-stuck (rc=$rc, calls=$calls, out=$out)"
 
+# ---- non-numeric MAX_NOPROGRESS => fail fast, no infinite loop ----
+d="$(make_project executing)"
+out="$(LOOPSPACE_MAX_NOPROGRESS=abc LOOPSPACE_RESUME_CMD="true" sh "$SCRIPT" "$d" 2>&1)"; rc=$?
+[ "$rc" -eq 1 ] && echo "$out" | grep -qi "integer" && ok || fail "max-noprogress-nonnumeric (rc=$rc, out=$out)"
+
 echo "----"
 echo "PASS=$PASS FAIL=$FAIL"
 [ "$FAIL" -eq 0 ]

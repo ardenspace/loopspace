@@ -187,3 +187,15 @@ Action도 헤드리스 구동. 비공식 뒷문이 아니다.
   기본 흐름은 그대로임을 강조).
 - CHANGELOG 엔트리 + VERSION bump(minor — 새 기능).
 - 백로그 6번 상태 갱신, 인터랙티브 경로 완화 후보는 기각으로 기록.
+
+## Spike result
+
+TRACKED-OPEN — `claude -p "/loopresume"`가 헤드리스에서 슬래시 명령을 실제
+스킬로 해석하고 임계에서 exit하는지의 검증(구현 전 검증할 가정, 위 1단계)은
+이번 세션에서 실행하지 못했다: auto-mode 샌드박스가 중첩된
+`claude -p --dangerously-skip-permissions` 실행을 막았다. 따라서 출고된
+기본값(`claude -p '/loopresume' --dangerously-skip-permissions`)은 검증되지
+않은 가정 위에 서 있으며, 사용자의 첫 실제 무인 런에서 검증될 예정이다.
+가정이 틀린 것으로 판명되면 코드 변경 없이 `LOOPSPACE_RESUME_CMD`로 자연어
+프롬프트(예: "Run the loopresume skill and continue the run")를 넘기는 것이
+문서화된 폴백이다.
