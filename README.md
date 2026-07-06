@@ -115,10 +115,15 @@ restart at a stable point — task cycle done or handoff written.)
   branch. A halt report names the last verified phase branch, so partial merges of
   verified work are one command.
 - **Light/heavy risk tiers.** The plan tags every task `light` (config, simple CRUD,
-  markup, docs) or `heavy` (auth, core business logic, data migrations, anything touching
-  a trust boundary). Light tasks get the cheap mechanical checklist; heavy tasks get the
-  three-lens panel. When a task's risk is ambiguous, the plan is supposed to tag it
-  heavy, and the plan review panel checks that the tags are honest.
+  markup, docs — and pure in-memory logic with no I/O, no trust boundary, and no new
+  dependency, however central: its whole surface is unit-testable) or `heavy` (auth,
+  data migrations, state machines with concurrency or partial-failure branches, native
+  platform integration, anything touching a trust boundary). Light tasks get the cheap
+  mechanical checklist; heavy tasks get the three-lens panel. When a task's risk is
+  ambiguous, the plan is supposed to tag it heavy, and the plan review panel checks the
+  tags in both directions — an auth task tagged light blocks approval, and pure logic
+  tagged heavy gets flagged for burning panel dispatches on code with no security
+  surface.
 - **Escalation before halting.** A failing task climbs a ladder — findings-carrying
   retries, cause classification (journaled with the verbatim verifier-finding lines that
   justify it — a cause without quotable evidence defaults to the burst, the only branch
@@ -185,8 +190,8 @@ field and example, are in [`docs/state-format.md`](docs/state-format.md).
 implementer pass — that's the bet described above: this cost is bounded and predictable,
 while the cost of an unverified failure compounds as later tasks build on top of it. Risk
 tiers keep the average down: most tasks should be `light` and get the cheap mechanical
-checklist, and only `heavy` tasks (auth, core logic, migrations) pay for the three-lens
-panel. The diversity burst is the same trade at the task level: it only spends extra
+checklist, and only `heavy` tasks (auth, migrations, trust boundaries) pay for the
+three-lens panel. The diversity burst is the same trade at the task level: it only spends extra
 candidates on tasks that already burned 3 attempts, where the alternative is halting and
 waiting for a human.
 
