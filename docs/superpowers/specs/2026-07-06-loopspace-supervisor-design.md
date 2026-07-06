@@ -200,8 +200,12 @@ Action도 헤드리스 구동. 비공식 뒷문이 아니다.
 tail 또는 git log로 한다(supervise.sh의 판별이 stdout이 아니라 state.md인
 이유와 같은 결).
 
-**후반부 TRACKED-OPEN:** 30% 임계에서 프로세스가 실제로 exit하는지(무한
-대기 없이)는 같은 런이 임계에 도달할 때 관측된다. 가정이 틀리면 코드 변경
-없이 `LOOPSPACE_RESUME_CMD`로 자연어 프롬프트를 넘기는 것이 문서화된
-폴백이다. (배경: 세션 내 검증은 auto-mode 샌드박스가 중첩
-`claude -p --dangerously-skip-permissions`를 막아 불가했다.)
+**후반부 통과 — 스파이크 클로즈 (2026-07-06 19:07):** 같은 프로세스가
+사람 개입 0으로 런 잔여 전체를 완주했다 — 4.2 완료(`17c382a`) + phase 4
+검증 + `run_status: complete` + 최종 커밋(`e7fe72f`, 19:07:52) 후 최종
+리포트를 출력하고 **스스로 exit**. "턴 종료 → 프로세스 exit" 메커니즘
+실증. 이어진 두 번째 `claude -p "/loopresume"` 호출은 complete 상태를
+읽고 즉시 리포트 후 종료 — supervise.sh의 `complete` 분기가 기대하는
+동작과 일치. 캐비앳: 30% 임계 변형은 이 런이 임계 도달 전에 끝나
+미관측이나, 임계 핸드오프도 동일한 턴-종료 경로라 별도 리스크로 보지
+않는다. 폴백(`LOOPSPACE_RESUME_CMD` 자연어 프롬프트)은 미사용으로 남는다.
