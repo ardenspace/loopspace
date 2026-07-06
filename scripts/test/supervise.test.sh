@@ -44,6 +44,30 @@ d="$(make_project spec)"
 out="$(sh "$SCRIPT" "$d" 2>&1)"; rc=$?
 [ "$rc" -eq 1 ] && echo "$out" | grep -qi "not an executing run" && ok || fail "spec (rc=$rc, out=$out)"
 
+# ---- telegram notify on complete (curl shimmed onto PATH) ----
+d="$(make_project complete)"
+shim="$(mktemp -d)"
+cat > "$shim/curl" <<'SHIM'
+#!/bin/sh
+# record every arg, one per line, to the capture file
+for a in "$@"; do echo "$a"; done >> "$CURL_CAPTURE"
+SHIM
+chmod +x "$shim/curl"
+cap="$(mktemp)"
+out="$(CURL_CAPTURE="$cap" PATH="$shim:$PATH" \
+       LOOPSPACE_TG_BOT_TOKEN=TESTTOKEN LOOPSPACE_TG_CHAT_ID=12345 \
+       sh "$SCRIPT" "$d" 2>&1)"; rc=$?
+[ "$rc" -eq 0 ] \
+  && grep -q "api.telegram.org/botTESTTOKEN/sendMessage" "$cap" \
+  && grep -q "12345" "$cap" \
+  && ok || fail "telegram-notify (rc=$rc, cap=$(cat "$cap"))"
+
+# ---- no telegram env => no curl call, still exits 0 ----
+d="$(make_project complete)"
+cap="$(mktemp)"
+out="$(CURL_CAPTURE="$cap" PATH="$shim:$PATH" sh "$SCRIPT" "$d" 2>&1)"; rc=$?
+[ "$rc" -eq 0 ] && [ ! -s "$cap" ] && ok || fail "no-telegram-env (rc=$rc, cap=$(cat "$cap"))"
+
 echo "----"
 echo "PASS=$PASS FAIL=$FAIL"
 [ "$FAIL" -eq 0 ]

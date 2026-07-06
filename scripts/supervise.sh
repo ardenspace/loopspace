@@ -21,7 +21,15 @@ cd "$PROJECT" 2>/dev/null || { echo "supervise: cannot cd to '$PROJECT'" >&2; ex
 STATE=".loopspace/state.md"
 
 notify() {
-  echo "supervise: $1"
+  msg="$1"
+  echo "supervise: $msg"
+  if [ -n "${LOOPSPACE_TG_BOT_TOKEN:-}" ] && [ -n "${LOOPSPACE_TG_CHAT_ID:-}" ]; then
+    curl -s -m 15 \
+      "https://api.telegram.org/bot${LOOPSPACE_TG_BOT_TOKEN}/sendMessage" \
+      -d "chat_id=${LOOPSPACE_TG_CHAT_ID}" \
+      --data-urlencode "text=loopspace: ${msg}" >/dev/null 2>&1 \
+      || echo "supervise: telegram notify failed (continuing)" >&2
+  fi
 }
 
 read_status() {
