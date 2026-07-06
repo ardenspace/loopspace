@@ -1,0 +1,59 @@
+name: release
+
+# Publish a GitHub Release whenever a version tag is pushed.
+# Notes come from the matching CHANGELOG.md section, mirroring the manual
+#   gh release create vX.Y.Z --notes-file <section>
+# flow. Falls back to auto-generated notes if the section is missing.
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Publish release from tag
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+
+          # Idempotent: never clobber an existing release.
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Release $TAG already exists — nothing to do."
+            exit 0
+          fi
+
+          version="${TAG#v}"   # v0.11.0 -> 0.11.0
+
+          # Pull the "## <version> — ..." block up to the next "## " heading.
+          awk -v hdr="## $version " \
+            'index($0, hdr) == 1 { f = 1; next }
+             f && /^## / { exit }
+             f { print }' CHANGELOG.md > notes.md
+
+          if [ -s notes.md ]; then
+            echo "Using CHANGELOG section for $version."
+            gh release create "$TAG" \
+              --title "$TAG" \
+              --notes-file notes.md \
+              --verify-tag
+          else
+            echo "No CHANGELOG section for $version — falling back to generated notes."
+            gh release create "$TAG" \
+              --title "$TAG" \
+              --generate-notes \
+              --verify-tag
+          fi
