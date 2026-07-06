@@ -61,6 +61,10 @@ Skipping step 2 invalidates your work — the verifier checks for evidence.
 Do not touch files outside this task's scope. Do not implement anything
 the acceptance criteria don't require.
 
+Comments: only to state a constraint the code cannot show by itself —
+never to restate acceptance criteria, narrate the next line, or justify
+the change.
+
 REPORT BACK (exactly this shape, nothing more):
 - verdict: DONE | BLOCKED
 - summary: <one line>
@@ -203,9 +207,16 @@ CHECKS:
 3. Integration seams: do the tasks' pieces reference each other correctly
    (names, types, contracts)? Grep for TODO/FIXME left in changed files.
 4. Cross-task scope drift: does the sum of tasks match the phase goal?
+5. Structural economy (advisory — never affects the verdict): are the
+   files and indirection layers this phase created proportionate to what
+   it shipped? Flag files that could be merged and abstractions with a
+   single caller. Do not flag seams the acceptance criteria required
+   (test isolation, injected fakes).
 
 REPORT BACK (exactly this shape):
 - verdict: PASS | FAIL
 - note: <one line>
+- structure-note: <advisory only, never a FAIL: files/layers that look
+  disproportionate, one line each — omit if none>
 - offending-task: <only if FAIL: the task id to re-open>
 - findings: <only if FAIL: numbered, one line each>

@@ -172,7 +172,8 @@ When the last task of a phase is done:
    rounds per phase** — fixing task A can break task B and ping-pong
    forever; a 4th FAIL halts (`report.md`, trigger: `phase-stall`).
 3. PASS → do this for **every** phase, the last one included: journal
-   `[phase N] verified`; overwrite `handoff.md` (trigger: `phase-boundary`),
+   `[phase N] verified` (append the verifier's `structure-note` lines
+   verbatim, if any); overwrite `handoff.md` (trigger: `phase-boundary`),
    carrying forward every previous-handoff item that is still true — phase
    1's flaky-test warning must survive into phase 3; commit the boundary
    (`loopspace: phase <N> verified`) so the phase journal entry and fresh

@@ -41,9 +41,13 @@ verifier. Each task must have:
 - `acceptance:` — criteria in test-description form. "returns 401 when the
   token is expired", never "auth works". A criterion an agent cannot turn
   into a pass/fail test is a planning bug.
-- `risk:` — `light` (config files, simple CRUD, markup, docs) or `heavy`
-  (auth/security, core business logic, data migrations, anything touching
-  a trust boundary). **When in doubt, tag heavy.**
+- `risk:` — `light` (config files, simple CRUD, markup, docs, and pure
+  in-memory logic with no I/O, no trust boundary, and no new dependency —
+  however central: its whole surface is unit-testable, so the single
+  verifier covers it) or `heavy` (auth/security, data migrations, state
+  machines with concurrency or partial-failure branches, native platform
+  integration, anything touching a trust boundary). **When in doubt, tag
+  heavy.**
 
 ## Step 2 — Plan Review Panel
 
@@ -58,8 +62,10 @@ one line each):
    that isn't actually shippable? Tasks too large to implement in one
    fresh context?
 3. **Scope & risk audit** — plan matches spec (no gold-plating, nothing
-   missing)? Risk tags honest? (An auth task tagged `light` is a
-   [BLOCKING] finding.)
+   missing)? Risk tags honest in both directions? (An auth task tagged
+   `light` is a [BLOCKING] finding; pure in-memory logic tagged `heavy`
+   is a [NON-BLOCKING] finding — a three-lens panel on code with no
+   security surface burns dispatches for nothing.)
 
 Blocking findings → revise → re-panel, max 3 rounds, same rules as the
 spec convergence loop.
