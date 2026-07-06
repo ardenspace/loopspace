@@ -103,6 +103,16 @@ restart at a stable point — task cycle done or handoff written.)
   then TDD — write the tests from the acceptance criteria first, show them fail,
   implement until they pass. The journal entry for a task must show the failing-first
   evidence — a task without it hasn't actually proven anything.
+- **Phase boundaries verify in both directions.** When a phase's last task lands, a
+  fresh phase verifier runs the full suite and checks the seams between tasks — pieces
+  that passed in isolation still have to hold together. It also emits two advisories
+  that never flip the verdict: structural economy (are the files and indirection layers
+  this phase created proportionate to what it shipped?) and plan freshness (do the
+  *next* phase's task blocks still match reality — criteria the current code already
+  satisfies, stale file references, conflicts with constraints this phase surfaced?).
+  Advisory notes are journaled and carried into the handoff, so a flagged task's own
+  implementer sees the suspicion before building; the plan itself still changes only
+  through the re-plan path.
 - **Git checkpoints and branch isolation.** In a git repository the whole run lives on
   its own branch stack: spec approval creates `loopspace/<slug>/run` (spec and plan
   approvals are committed there), and execution stacks one branch per phase
