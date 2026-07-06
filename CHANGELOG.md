@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.8.0 — 2026-07-06
+
+- **`/loopupdate`.** One command to update the plugin: refreshes the
+  marketplace, runs `claude plugin update`, and shows the changelog
+  entries between the installed and new versions. Loopspace-specific
+  guard: when a run is `executing`, it recommends restarting at a stable
+  point (task cycle done or handoff written) so one run never mixes
+  template versions mid-task. Restarting Claude Code is still required
+  to load the new version — a harness constraint, not a skill choice.
+
 ## 0.7.0 — 2026-07-06
 
 First backlog pass after the Lane C dogfood (ledger:

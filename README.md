@@ -49,6 +49,11 @@ killed session, a `/clear`, or a crash never loses more than the last task's pro
 /plugin install loopspace@loopspace
 ```
 
+To update later, run `/loopupdate` — it refreshes the marketplace,
+updates the plugin, and shows the changelog entries you're picking up.
+(Restart Claude Code to load the new version; a running loop should
+restart at a stable point — task cycle done or handoff written.)
+
 ## Quickstart
 
 1. Install the plugin (above).
