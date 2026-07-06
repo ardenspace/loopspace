@@ -11,10 +11,24 @@
 #   LOOPSPACE_TG_BOT_TOKEN / LOOPSPACE_TG_CHAT_ID  Telegram notifications (both required to enable)
 #   LOOPSPACE_RESUME_CMD    command to resume the run (harness-swap seam; default below)
 #   LOOPSPACE_MAX_NOPROGRESS  restarts with no progress before giving up (default 2)
+#   LOOPSPACE_MAX_RESTARTS  absolute ceiling on resume launches per invocation,
+#                           regardless of progress (default 50)
+#
+# Notes:
+#   - The Telegram bot token appears in curl's argv, so it is visible in `ps`
+#     to other users on shared machines. Acceptable under the same
+#     container/dedicated-machine assumption --dangerously-skip-permissions
+#     already requires; use a dedicated machine if that matters.
+#   - LOOPSPACE_RESUME_CMD runs with CWD = the project directory (this script
+#     cd's there), so relative paths in it resolve against the project, not
+#     the terminal you launched from.
 set -u
+
+trap 'echo "supervise: interrupted" >&2; exit 130' INT TERM
 
 PROJECT="${1:-.}"
 MAX_NOPROGRESS="${LOOPSPACE_MAX_NOPROGRESS:-2}"
+MAX_RESTARTS="${LOOPSPACE_MAX_RESTARTS:-50}"
 RESUME_CMD="${LOOPSPACE_RESUME_CMD:-claude -p '/loopresume' --dangerously-skip-permissions}"
 
 case "$MAX_NOPROGRESS" in
@@ -23,6 +37,15 @@ case "$MAX_NOPROGRESS" in
     exit 1 ;;
   0)
     echo "supervise: LOOPSPACE_MAX_NOPROGRESS must be >= 1 (got 0)" >&2
+    exit 1 ;;
+esac
+
+case "$MAX_RESTARTS" in
+  ''|*[!0-9]*)
+    echo "supervise: LOOPSPACE_MAX_RESTARTS must be a positive integer (got '$MAX_RESTARTS')" >&2
+    exit 1 ;;
+  0)
+    echo "supervise: LOOPSPACE_MAX_RESTARTS must be >= 1 (got 0)" >&2
     exit 1 ;;
 esac
 
@@ -46,13 +69,15 @@ read_status() {
 }
 
 progress_sig() {
-  { sed -n '/^## Tasks/,$p' "$STATE" 2>/dev/null
-    wc -l < .loopspace/journal.md 2>/dev/null
+  { cat "$STATE" 2>/dev/null
+    wc -l 2>/dev/null < .loopspace/journal.md
   } | cksum
 }
 
 prev_sig=""
 noprogress=0
+restarts=0
+torn=0
 
 while :; do
   if [ ! -f "$STATE" ]; then
@@ -68,6 +93,7 @@ while :; do
       notify "run HALTED — decision needed (see .loopspace/report.md)"
       exit 0 ;;
     executing)
+      torn=0
       sig="$(progress_sig)"
       if [ "$sig" = "$prev_sig" ]; then
         noprogress=$((noprogress + 1))
@@ -79,11 +105,27 @@ while :; do
         noprogress=0
       fi
       prev_sig="$sig"
+      if [ "$restarts" -ge "$MAX_RESTARTS" ]; then
+        notify "run exceeded LOOPSPACE_MAX_RESTARTS ($MAX_RESTARTS) — stopping ($PROJECT)"
+        exit 1
+      fi
+      restarts=$((restarts + 1))
       # eval so quoted args in RESUME_CMD parse correctly; SC2086 intentional
       eval "$RESUME_CMD"
       ;;
-    *)
-      notify "run_status='${status:-<none>}' — not an executing run, exiting ($PROJECT)"
+    spec|planning)
+      notify "run_status='$status' — not an executing run, exiting ($PROJECT)"
       exit 1 ;;
+    *)
+      # Unknown/empty status can be a torn read (claude died mid-rewrite of
+      # state.md). Retry once before treating it as fatal.
+      if [ "$torn" -eq 0 ]; then
+        torn=1
+        echo "supervise: unrecognized run_status '${status:-<none>}' — possible torn write, retrying once" >&2
+        sleep 3
+      else
+        notify "run_status='${status:-<none>}' — not an executing run, exiting ($PROJECT)"
+        exit 1
+      fi ;;
   esac
 done
