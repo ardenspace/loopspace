@@ -33,11 +33,12 @@ mechanically before touching anything:
    under HEAD; continue.
 3. If the branch no longer exists, fall back to searching HEAD's
    history: `git log --oneline --grep "loopspace: run complete —
-   <slug>"`, where `<slug>` is read from the still-live state.md's
-   `run_branch` (strip any trailing `-v<K>` suffix — see Step 6.2) — a
-   hit means the completed run was merged in; continue. The slug
-   qualifier matters: without it, another feature's run-complete commit
-   anywhere in the same repo's history would produce a false pass.
+   <slug>"`, where `<slug>` is the still-live state.md `run_branch`'s
+   slug segment, used verbatim — exactly as looprun committed it (run 2
+   completed as `… — feat-x-v2`, so grep for `feat-x-v2`) — a hit means
+   the completed run was merged in; continue. The slug qualifier
+   matters: without it, another feature's run-complete commit anywhere
+   in the same repo's history would produce a false pass.
 4. Both fail → stop and tell the human: merge run N-1 into this branch
    (or check out the run's branch), then re-run /loopnext (a
    squash-merged run branch also lands here — the ancestor check cannot
@@ -158,7 +159,7 @@ Present the delta plan; approve or revise. On approval:
    its risk tag; carry `## Project Facts` over verbatim from
    `archive/run-<N-1>/state.md` — run N-1's corrected facts beat
    re-deriving them from the spec. The three branch fields carry over
-   from step 2 unchanged. Then commit (git projects) with only the
+   from item 2 above unchanged. Then commit (git projects) with only the
    loopspace files staged — `git add .loopspace` — message
    `loopspace: run <N> opened — <slug>-v<N>`.
 5. Suggest running `/looprun`.
@@ -169,7 +170,8 @@ Present the delta plan; approve or revise. On approval:
 - Advisories are adopted or rejected by the human only — never
   auto-adopt a structure-note or spec-concern into the amendment.
 - Requirements are edited in place; history lives in the Amendment Log.
-  Never rewrite an existing log entry.
+  Never rewrite an existing log entry (sole exception: gate #1 flips the
+  current entry's `### vN — draft` heading to its approval form).
 - Never modify anything under `archive/` except the Step 4 abort
   restore.
 - The panel runs on the written amendment, with fresh subagents — never
