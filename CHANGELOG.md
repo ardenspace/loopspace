@@ -1,5 +1,26 @@
 # Changelog
 
+## 0.12.0 — 2026-07-08
+
+- **`/loopnext` — spec versioning between runs (backlog item 10).** The
+  pipeline was a waterfall: one frozen spec, one run. loopnext is the
+  human touchpoint between a completed run and the next — usage feedback
+  plus the journal's advisories (structure-note and spec-concern finally
+  get their consumer) become an in-place spec amendment (`spec_version`,
+  R-ids revised/dropped/added with an origin-tagged Amendment Log) and a
+  delta plan, verified by a 3-lens panel (coherence — new, checks the
+  amendment against frozen requirements and what the last run actually
+  built — plus adversarial and verifiability). Execution is unchanged:
+  run N branches as `loopspace/<slug>-v<N>/run`, so looprun's logic runs
+  verbatim; its only edit is a one-sentence pointer in the run-complete
+  report. Run lifecycle is now defined: prior runs archive to
+  `.loopspace/archive/run-<N>/` (spec snapshot included), the journal
+  persists across runs under run headers, an ancestor check refuses to
+  draft a delta on a tree that lacks run N-1's code, and rejecting the
+  amendment restores the pre-loopnext state exactly. The spec stays
+  frozen within a run — versioning happens only between runs, at human
+  approval gates.
+
 ## 0.11.0 — 2026-07-06
 
 - **Headless supervisor (opt-in, backlog item 6 v1).** A new `/loopsupervise`

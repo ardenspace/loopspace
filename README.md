@@ -26,6 +26,11 @@ that task 2.3 quietly broke the thing task 4.1 depends on.
                                                    │  diverse retries   │
                                                    └──────── loop ──────┘
         state lives in .loopspace/ — kill the session, /loopresume continues
+
+ done ──▶ use it ──▶ /loopnext ─────────────▶ /looprun ──▶ done ──▶ …
+                      feedback + journal advisories
+                      → spec amendment (v2, v3, …) + delta plan
+                      → two human approvals, then the same loop
 ```
 
 `/loopspec` turns an idea into a rigorously reviewed spec through a four-lens
@@ -41,6 +46,12 @@ loop halts with a report. A task that keeps failing escalates through a diversit
 of approach-forced retries before it is allowed to halt the run.
 `/loopresume` rebuilds the orchestrator's position from `.loopspace/` alone, so a
 killed session, a `/clear`, or a crash never loses more than the last task's progress.
+`/loopnext` closes the cycle: when a run is complete and using the result
+reveals what the spec got wrong, it turns your feedback — plus the
+advisories verifiers accumulated in the journal — into a versioned spec
+amendment and a small delta plan, then hands back to `/looprun`. The spec
+is frozen within a run and versioned between runs, so iteration never
+weakens the unattended loop.
 
 ## Install
 
@@ -202,7 +213,8 @@ field and example, are in [`docs/state-format.md`](docs/state-format.md).
 | `spec.md` | The approved spec: lens sections, requirements, approval record. Frozen after approval. |
 | `plan.md` | Phase → task tree with acceptance criteria and risk tags. Frozen after approval except recorded re-plans. |
 | `state.md` | Run status from spec stage onward, current phase/task pointer, per-task status and attempt counts, project facts (test/build commands) injected into every subagent. |
-| `journal.md` | Append-only log: every task attempt, verdict, TDD evidence, files changed. |
+| `journal.md` | Append-only log across runs: every task attempt, verdict, TDD evidence, files changed — run headers scope each run's entries. |
+| `archive/run-<N>/` | Prior runs' plan/state/handoff plus a spec snapshot, moved aside by `/loopnext` when the next run opens. |
 | `handoff.md` | Notes for the next session, overwritten at phase boundaries and at the context threshold. |
 | `report.md` | Halt report — progress, blocker, and options — written only when the run halts. |
 
@@ -233,6 +245,16 @@ context — that's a harness constraint, not a design choice. loopspace works ar
 writing everything the next session needs to `.loopspace/` before the threshold, then
 asking you to run `/clear` and `/loopresume` yourself. That manual step is the one
 place a human touches an otherwise autonomous run.
+
+**The run is done and I want changes — new spec?** No: run `/loopnext`.
+It reads the journal's advisories (`structure-note`, `spec-concern`),
+interviews you about what using the MVP revealed, amends the spec in
+place (versioned, with an Amendment Log naming every change's origin),
+plans only the delta, and hands back to `/looprun` — which is untouched:
+to it, run 2 is just another approved spec and plan. Guard rails: it
+verifies run N-1's code is actually under your HEAD before drafting
+(no deltas built on a tree without the MVP), and rejecting the amendment
+restores everything exactly as before.
 
 **Other harnesses (Codex, etc.)?** Not in v1 — this plugin targets Claude Code only. The
 `.loopspace/` state format (plain markdown, versioned, line-oriented) was designed to be
