@@ -13,9 +13,11 @@ The spec is the human's contract. Downstream agents never modify it.
 
 **Guard before anything else:** if `.loopspace/` already exists, read
 `state.md`'s `run_status` (and `spec.md`'s `status` if present) and report
-what you found. An active run (`planning`, `executing`, `halted`) or an
-approved spec is never overwritten silently — ask the human whether to
-archive the old run or abort.
+what you found. `run_status: complete` → iterating on what was built is
+`/loopnext`'s job, not a fresh spec's — suggest it (only a genuinely new
+project in the same repo continues here). An active run (`planning`,
+`executing`, `halted`) or an approved spec is never overwritten silently —
+ask the human whether to archive the old run or abort.
 
 ## Flow
 

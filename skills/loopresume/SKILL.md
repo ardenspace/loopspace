@@ -57,9 +57,15 @@ for status, stop here.
 - `halted` → summarize `report.md` and its options; await the human's
   decision. Once they decide, hand over to the looprun skill's Halt-Resume
   procedure — never restart the loop on your own.
-- `complete` → say so; nothing to resume.
-- `spec` → `spec.md` approved? suggest `/loopplan`. Still draft or absent?
+- `complete` → say so; if the human wants to change or extend what was
+  built, suggest `/loopnext` — it turns usage feedback and the journal's
+  advisories into the next run.
+- `spec` → state.md has `run: N` with N≥2? An interrupted loopnext —
+  suggest `/loopnext`; it resumes its own amendment draft. Otherwise:
+  `spec.md` approved? suggest `/loopplan`. Still draft or absent?
   suggest `/loopspec` — it resumes from the existing draft and interview
   answers already captured in it.
-- `planning` → `plan.md` approved (crash before state was rewritten)?
-  suggest `/looprun`. Otherwise suggest `/loopplan` to finish the draft.
+- `planning` → state.md has `run: N` with N≥2? suggest `/loopnext` (its
+  delta-plan stage). Otherwise: `plan.md` approved (crash before state
+  was rewritten)? suggest `/looprun`. Otherwise suggest `/loopplan` to
+  finish the draft.

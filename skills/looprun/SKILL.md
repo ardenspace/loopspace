@@ -207,7 +207,10 @@ When the last task of a phase is done:
    human (tasks, retries, re-plans), plus every `spec-concern` line from
    the journal, verbatim — the loop built what the spec said; whether the
    spec said the right thing is the human's question, and this is where
-   they get to ask it. Git projects: the run is over, so
+   they get to ask it. Mention `/loopnext`: when the human wants changes
+   after using what was built, it turns that feedback and the journal's
+   advisories into an amended spec and a delta plan for the next run.
+   Git projects: the run is over, so
    this report is a human touchpoint again — offer the branch decision and
    perform whichever the human picks, never picking for them:
    - merge `current_branch` into `base_branch` as a regular merge commit
