@@ -38,6 +38,13 @@ only `.loopspace/` can continue exactly. This skill is that read path.
   crash caught the run mid phase-hop — keep the newer branch and fix
   `current_branch` in state.md to match; never check out backwards. (No
   branch fields → non-git project → skip.)
+- `harness:` in state.md names a profile other than the harness
+  actually running this session → re-resolve per
+  `../../harnesses/PROFILE-SPEC.md`, update `harness:` (and `tier:` if
+  it changed), and journal the switch:
+  `## [harness] switched <old> → <new> (tier <A|B|C> → <A|B|C>)`.
+  Fields absent → pre-0.13 run: treat as claude-code / A and add the
+  fields at the next state write.
 - No task is `in_progress` with a journal PASS entry (a crash between
   verifier PASS and state update — if found, mark it done, journal the
   correction, continue).

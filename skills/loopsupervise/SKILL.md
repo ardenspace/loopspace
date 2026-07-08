@@ -11,7 +11,10 @@ is the context clear — no `/clear` needed. It is an **opt-in power-user
 path**. The normal interactive run keeps its manual `/clear` + `/loopresume`
 handoff; this does not replace it. The supervisor lives at
 `scripts/supervise.sh` in this plugin; this skill only checks preconditions
-and prints the command to launch it elsewhere.
+and prints the command to launch it elsewhere. On a non-Claude-Code
+harness, the same supervisor drives the run through
+`LOOPSPACE_RESUME_CMD` — set it to the headless resume command in your
+harness profile (`../../harnesses/`).
 
 ## Steps
 

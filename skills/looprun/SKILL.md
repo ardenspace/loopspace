@@ -16,9 +16,16 @@ below. `run_status: complete` → say so, stop. All file formats:
 ## Orchestrator Contract (what keeps this loop alive)
 
 - You are a dispatcher, not an implementer. You never write project code.
-- **Fresh subagent per task, never reused** — even if the previous one
+- **Fresh agent per task, never reused** — even if the previous one
   finished with context to spare. One task = one implementer + one
   verifier, minimum.
+- **Harness dispatch:** state.md's `harness:`/`tier:` fields say how
+  fresh agents are launched — mechanics in the harness profile
+  (`../../harnesses/<harness>.md`), tier semantics in
+  `../../harnesses/PROFILE-SPEC.md`. Tier A: this skill as written.
+  Tier B: every parallel dispatch runs sequentially — same prompts,
+  same verdict rules. Tier C: dispatch becomes the role-swap protocol.
+  Fields absent (pre-0.13 run) → claude-code / A.
 - **Diet:** consume verdicts, one-line summaries, and file lists. Never
   request or accept code dumps, diffs, or full test output into your own
   context. The prompts in `references/agent-prompts.md` enforce the report
@@ -27,7 +34,7 @@ below. `run_status: complete` → say so, stop. All file formats:
   dispatching the next. A crash must never lose more than one task of
   progress.
 - Every dispatch carries the `## Project Facts` block from state.md, so
-  fresh subagents never re-discover the repo. When an implementer's report
+  fresh agents never re-discover the repo. When an implementer's report
   corrects a fact (`facts:` line), update state.md before the next dispatch.
 - **Git checkpoint:** if the project is a git repository, commit after every
   verifier PASS — message `loopspace: task <id> — <title>` — so one bad task
@@ -76,7 +83,9 @@ next task = first non-done task in plan order
      rule: PASS requires all three lenses PASS — lenses are
      complementary coverage, not votes; a security FAIL cannot be
      outvoted. Any lens FAIL → merge all FAIL findings (numbered,
-     lens-tagged) and take the FAIL path.
+     lens-tagged) and take the FAIL path. (Tier B: same waves, one
+     agent at a time; Tier C: three sequential role-swaps, same lens
+     order, correctness last.)
    - retry dispatches: fill the CONTESTED FINDINGS section with the
      `contested:` lines from the implementer's report (or "none").
      Never adjudicate a contest yourself — re-deriving facts is the
@@ -204,7 +213,9 @@ When the last task of a phase is done:
    message `loopspace: run complete — <slug>` — so `run_status: complete`
    and the last journal entry are checkpointed and the merge or PR below
    carries completed state, not `executing`. Then report totals to the
-   human (tasks, retries, re-plans), plus every `spec-concern` line from
+   human (tasks, retries, re-plans) and the harness/tier the run
+   executed under (state.md fields; plus per-role models if the
+   profile routed any), plus every `spec-concern` line from
    the journal, verbatim — the loop built what the spec said; whether the
    spec said the right thing is the human's question, and this is where
    they get to ask it. Mention `/loopnext`: when the human wants changes
@@ -230,9 +241,9 @@ whichever comes first:
 1. Finish the in-flight task cycle (never abandon a dispatched verifier).
 2. Overwrite `handoff.md` (trigger: `context-threshold`) with everything
    the next session needs.
-3. Update `state.md`, then end the turn telling the user exactly:
-   run `/clear`, then `/loopresume`. This is typing, not judgment —
-   say so.
+3. Update `state.md`, then end the turn telling the user exactly the
+   harness profile's reset-and-resume commands (Claude Code: `/clear`,
+   then `/loopresume`). This is typing, not judgment — say so.
 
 ## Rules
 

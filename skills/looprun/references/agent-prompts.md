@@ -1,7 +1,7 @@
-# Subagent Prompt Templates
+# Agent Prompt Templates
 
 Replace `{...}` placeholders before dispatch. Keep each dispatch
-self-contained: subagents have NO conversation context.
+self-contained: dispatched agents have NO conversation context.
 
 ## Template A — Implementer
 
