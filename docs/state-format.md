@@ -57,7 +57,9 @@ Amendment rules (loopnext only — the spec is still frozen *within* a run):
 - A dropped requirement keeps its line, prefixed `[dropped in vN]` —
   numbering holes stay explained, old journal references stay resolvable.
   Dropped R-ids are never reused.
-- New requirements continue the numbering (`R8`, `R9`, …).
+- New requirements continue the numbering and carry an `(added in vN)`
+  marker — `R8: … (added in vN)`; the latest-marker-only rule applies to
+  it too.
 - Lens sections are updated in place only where the delta touches them.
 - The `## Amendment Log` section is append-only:
 
@@ -69,6 +71,10 @@ Amendment rules (loopnext only — the spec is still frozen *within* a run):
 - R3 revised: <one-line rationale> (origin: spec-concern [2.4])
 - R5 dropped: <one-line rationale> (origin: structure-note phase 2)
 ```
+
+While drafting (before human approval), the heading reads `### v2 —
+draft`; gate #1 approval rewrites it to `### v2 — <YYYY-MM-DD>, approved
+by human` — the example above shows the post-approval form.
 
 Every entry names its origin — `human feedback`, `structure-note <where>`,
 or `spec-concern <where>` — so whether the advisory pipeline is actually
@@ -142,6 +148,7 @@ From plan approval on, the full form, rewritten by looprun after every task:
 ```markdown
 # Loopspace State
 version: 1
+run: 2                      # absent = 1; rewriters preserve it
 run_status: executing
 current_phase: 2
 current_task: 2.3
@@ -160,6 +167,9 @@ current_branch: loopspace/feat-x/phase-2
 | 1.1 | done        | 1        | light |
 | 2.3 | in_progress | 2        | heavy |
 ```
+
+Header fields a rewriter does not own are preserved verbatim —
+looprun's per-task rewrites must not drop `run:`.
 
 `status` values: `pending | in_progress | done | failed`. `failed` is set
 only on the task that triggered a halt; the halt-resume procedure in looprun
@@ -217,6 +227,8 @@ version: 1
 ## [re-plan 2.3] <one line: what was split/reordered and why>
 
 ## [phase 1] verified — <one-line integration note>
+- structure-note: <verbatim, advisory — phase-level structural-economy
+  observation consumed by loopnext>
 
 ## [halt] resolved — <one line: the human's decision that cleared the halt>
 ```
@@ -297,7 +309,13 @@ runs at the top level (the spec is amended in place; the journal appends
 under run headers). `report.md` never appears here: it only exists on a
 halt and halt-resume deletes it.
 
-Restore contract (loopnext's amendment-rejected abort): copying
-`archive/run-<N-1>/` contents back over `.loopspace/` and deleting the
-run-N state.md and the emptied archive dir must reproduce the
-pre-loopnext state exactly.
+Restore contract (loopnext's amendment-rejected abort), in this exact
+order: (1) delete the run-N `state.md` loopnext wrote when it opened the
+run; (2) move `plan.md`, `state.md`, `handoff.md` out of
+`archive/run-<N-1>/` back into `.loopspace/`; (3) copy the `spec.md`
+snapshot in `archive/run-<N-1>/` back over `.loopspace/spec.md`; (4)
+delete the directory `archive/run-<N-1>/` recursively — the snapshot
+copy is still in it, so the directory is not empty at this point. This
+must never touch `archive/` itself or any earlier `run-<K>/` directory —
+reproducing the pre-loopnext state exactly means run-1's archive
+survives a run-3 abort untouched.

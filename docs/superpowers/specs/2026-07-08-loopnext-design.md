@@ -81,9 +81,14 @@ loopspace는 원래 feature 단위 파이프라인이므로 "실전 프로젝트
 3. 델타 검증 패널 (축소판, 아래 참조) → 수렴 루프 최대 3라운드
 4. 인간 승인 게이트 #1 — amendment 승인 → spec.md status: approved
    - **abort 경로 (전면 기각):** 사람이 amendment를 통째로 기각하면
-     archive/run-<N-1>/에서 원복한다 — spec.md 스냅샷 복원(approved
-     상태 그대로), plan.md/state.md/handoff.md를 제자리로, run N의
-     header-only state.md 삭제, archive/run-<N-1>/ 제거. 결과는
+     정확히 이 순서로 원복한다 — (1) 2단계에서 쓴 run N의 header-only
+     state.md 삭제, (2) archive/run-<N-1>/에서 plan.md/state.md/
+     handoff.md를 .loopspace/로 제자리 이동, (3) archive/run-<N-1>/의
+     spec.md 스냅샷을 spec.md 위에 복사(approved 상태 그대로), (4)
+     archive/run-<N-1>/ 디렉터리를 재귀적으로 삭제 — 스냅샷 복사본이
+     아직 그 안에 있으므로 이 시점의 디렉터리는 비어 있지 않다.
+     archive/ 자체나 더 이전 run-<K>/ 디렉터리는 절대 건드리지 않는다 —
+     run 3의 abort에서도 archive/run-1/은 그대로 남는다. 결과는
      "loopnext를 돌리기 전과 완전히 동일한 상태"다. 이 절이 없으면
      기각된 드래프트가 림보에 남아 loopresume이 영원히 loopnext로
      라우팅한다.
@@ -92,8 +97,15 @@ loopspace는 원래 feature 단위 파이프라인이므로 "실전 프로젝트
      체크)을 참조로 재사용, 새 plan.md 작성
 6. 인간 승인 게이트 #2 — plan 승인
 7. run 확정 마무리
-   - 저널에 run 헤더 기입, 브랜치 생성, 체크포인트 커밋 (archive와
+   - 저널에 run 헤더 기입, 브랜치 생성 (archive 이동과 header-only
      state.md는 2단계에서 이미 처리됨)
+   - state.md를 실행 전체형으로 재작성 — loopplan 승인 단계와 동일한
+     절차: `run: N` 유지, `run_status: executing`, `current_phase: 1`,
+     `current_task:`(델타 plan의 첫 태스크 id), `## Tasks` 테이블(델타
+     plan의 모든 태스크를 pending / attempts: 0 / risk 태그로 기입),
+     `## Project Facts`는 `archive/run-<N-1>/state.md`에서 그대로
+     이월(run N-1의 보정된 사실이 스펙 재도출보다 우선)
+   - 체크포인트 커밋
 8. /looprun 제안하고 종료
 ```
 

@@ -32,11 +32,18 @@ mechanically before touching anything:
 2. `git merge-base --is-ancestor <sha> HEAD` — exit 0 means run N-1 is
    under HEAD; continue.
 3. If the branch no longer exists, fall back to searching HEAD's
-   history: `git log --oneline --grep "loopspace: run complete"` — a hit
-   means the completed run was merged in; continue.
+   history: `git log --oneline --grep "loopspace: run complete —
+   <slug>"`, where `<slug>` is read from the still-live state.md's
+   `run_branch` (strip any trailing `-v<K>` suffix — see Step 6.2) — a
+   hit means the completed run was merged in; continue. The slug
+   qualifier matters: without it, another feature's run-complete commit
+   anywhere in the same repo's history would produce a false pass.
 4. Both fail → stop and tell the human: merge run N-1 into this branch
-   (or check out the run's branch), then re-run /loopnext. Never draft a
-   delta over a tree that lacks the code it amends.
+   (or check out the run's branch), then re-run /loopnext (a
+   squash-merged run branch also lands here — the ancestor check cannot
+   see squashes, but the same advice still applies: merge or check out
+   the branch). Never draft a delta over a tree that lacks the code it
+   amends.
 
 No branch fields in state.md → non-git project → skip this step.
 
@@ -72,7 +79,8 @@ resumable marker instead of a torn run:
    `status: draft` and `spec_version: N`; edit Requirements in place
    (revised keeps its R-id with a latest-only `(revised in vN)` marker;
    dropped keeps its line prefixed `[dropped in vN]`; new continues the
-   numbering); update only the lens sections the delta touches; append
+   numbering with an `(added in vN)` marker); update only the lens
+   sections the delta touches; append
    the `## Amendment Log` entry with every item's origin — `human
    feedback`, `structure-note <where>`, or `spec-concern <where>`.
    A structure-cleanup adoption becomes a requirement whose criteria pin
@@ -94,17 +102,22 @@ interview.
 Present the amended spec.md, what changed across panel rounds, and every
 remaining non-blocking finding. Three outcomes:
 
-- **Approve** → `status: approved`, complete the Amendment Log entry's
-  approval line with today's date, continue to Step 5.
+- **Approve** → `status: approved`; rewrite the Amendment Log entry's
+  heading from `### vN — draft` to `### vN — <YYYY-MM-DD>, approved by
+  human`, continue to Step 5.
 - **Revise** → back to Step 2's drafting with the corrections, then
   re-panel (Step 3).
-- **Reject entirely** → full abort. Restore the pre-loopnext state
-  exactly: copy the spec.md snapshot back over `spec.md`; move
-  `plan.md`, `state.md`, `handoff.md` out of `archive/run-<N-1>/` back
-  into `.loopspace/`; delete the run-N state.md you wrote and the
-  now-empty archive dir. The result must be indistinguishable from never
-  having run /loopnext — without this, a rejected draft strands the
-  project in a limbo loopresume forever routes back here.
+- **Reject entirely** → full abort, in this exact order: (1) delete the
+  run-N `state.md` you wrote in Step 2; (2) move `plan.md`, `state.md`,
+  `handoff.md` out of `archive/run-<N-1>/` back into `.loopspace/`; (3)
+  copy the spec.md snapshot back over `spec.md`; (4) delete the
+  directory `archive/run-<N-1>/` recursively — the snapshot copy is
+  still in it, so the directory is not empty when step 4 runs. Never
+  touch `archive/` itself or any earlier `run-<K>/` directory: at run
+  3's abort, `archive/run-1/` must survive. The result must be
+  indistinguishable from never having run /loopnext — without this, a
+  rejected draft strands the project in a limbo loopresume forever
+  routes back here.
 
 ## Step 5 — Delta plan
 
@@ -123,7 +136,10 @@ Present the delta plan; approve or revise. On approval:
 1. Set plan.md `status: approved`.
 2. **Branch + checkpoint (git projects only):** run N's slug is
    `<slug>-v<N>` (base slug read from the archived state.md's
-   `run_branch`, never re-derived). Working-tree cleanliness and stale
+   `run_branch`, never re-derived — the base slug is the run_branch's
+   slug segment with any trailing `-v<K>` suffix stripped, so run 3 of
+   feature `feat-x` branches as `loopspace/feat-x-v3/run`, never
+   `feat-x-v2-v3`). Working-tree cleanliness and stale
    `loopspace/<slug>-v<N>/*` branches are handled exactly as loopspec's
    approval step does — ask, never decide alone. Create and check out
    `loopspace/<slug>-v<N>/run` from HEAD; record `base_branch` (the
@@ -132,9 +148,18 @@ Present the delta plan; approve or revise. On approval:
    its phase-branch logic works on run N unmodified.
 3. Append the run header to `journal.md` (state-format journal section):
    run number, spec_version, one-line amendment summary, adopted
-   advisories.
-4. Set `run_status: executing`. Commit with only the loopspace files
-   staged — `git add .loopspace` — message
+   advisories. If run N's header already exists in journal.md (a crash
+   between this step and the next), do not append a second one.
+4. Rewrite `.loopspace/state.md` into the full execution form (state.md
+   section of the format doc, mirroring loopplan's approval step): keep
+   `run: N`; set `run_status: executing`, `current_phase: 1`, and
+   `current_task:` the first delta-plan task's id; write a `## Tasks`
+   table listing every delta-plan task `pending` with `attempts: 0` and
+   its risk tag; carry `## Project Facts` over verbatim from
+   `archive/run-<N-1>/state.md` — run N-1's corrected facts beat
+   re-deriving them from the spec. The three branch fields carry over
+   from step 2 unchanged. Then commit (git projects) with only the
+   loopspace files staged — `git add .loopspace` — message
    `loopspace: run <N> opened — <slug>-v<N>`.
 5. Suggest running `/looprun`.
 
