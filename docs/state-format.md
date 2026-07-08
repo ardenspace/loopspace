@@ -301,4 +301,3 @@ Restore contract (loopnext's amendment-rejected abort): copying
 `archive/run-<N-1>/` contents back over `.loopspace/` and deleting the
 run-N state.md and the emptied archive dir must reproduce the
 pre-loopnext state exactly.
-```
