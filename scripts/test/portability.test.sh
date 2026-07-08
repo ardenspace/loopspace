@@ -7,10 +7,11 @@ PASS=0; FAIL=0
 fail() { echo "FAIL: $1"; FAIL=$((FAIL+1)); }
 ok()   { PASS=$((PASS+1)); }
 
-# 1) Harness-specific terms are banned in skill bodies.
+# 1) Harness-specific terms are banned in skill bodies: subagent,
+#    task tool, AskUserQuestion.
 #    Allowlist: skills/loopupdate (Claude Code-only by design).
 hits="$(find "$ROOT/skills" -name '*.md' ! -path '*/loopupdate/*' \
-  -exec grep -niE 'subagent|task tool' {} + 2>/dev/null)" || true
+  -exec grep -niE 'subagent|task tool|askuserquestion' {} + 2>/dev/null)" || true
 if [ -n "${hits:-}" ]; then
   fail "harness-specific terms in the neutral core:
 $hits"

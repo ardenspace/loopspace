@@ -25,7 +25,7 @@ and at every resume (loopresume's validation step):
 
 A run may switch harnesses between sessions — the state files are
 neutral by design. loopresume detects the mismatch, updates the
-fields, and journals the switch when the tier changed.
+fields, and journals the switch.
 
 ## Required fields — the questions every profile answers
 
@@ -36,7 +36,10 @@ portability lint checks them):
 - `tier:` — `A | B | C`, derived from the capability answers below.
 - `verified:` — date of the last real loopspace run on this harness,
   or `unverified`. An unverified profile is a best-effort map, not a
-  guarantee; say so when reporting.
+  guarantee; say so when reporting. `n/a` is also valid, but only for
+  a profile that is a definitional floor rather than a mappable
+  harness (e.g. generic.md) — it never maps to a real harness to run
+  loopspace on, so "verified" doesn't apply.
 - `## Dispatch` — how to launch a fresh agent with a given prompt and
   get its report back. "None" is a valid answer (forces Tier C).
 - `## Parallelism` — whether two read-only agents can genuinely run

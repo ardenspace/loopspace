@@ -187,7 +187,8 @@ seeds them from the spec's Engineer Lens (a greenfield project may start
 with "none yet"), looprun injects them into every dispatch and corrects
 them whenever an implementer reports a differing fact.
 
-## journal.md — append-only, written by looprun
+## journal.md — append-only; written by looprun, plus loopnext's run
+header and loopresume's harness-switch entry
 
 ```markdown
 # Journal
@@ -238,6 +239,8 @@ version: 1
   observation consumed by loopnext>
 
 ## [halt] resolved — <one line: the human's decision that cleared the halt>
+
+## [harness] switched <old> → <new> (tier <A|B|C> → <A|B|C>)
 ```
 
 Task ids restart at 1.1 inside each run; the nearest run header above an

@@ -76,8 +76,9 @@ resumable marker instead of a torn run:
    in as a snapshot. The snapshot is the abort path's restore material —
    spec.md itself stays in place, about to be amended.
 2. Write a fresh header-only `state.md`: `run: N`, `run_status: spec`,
-   and re-resolved `harness:`/`tier:` fields (PROFILE-SPEC resolution —
-   the harness may have changed since run N-1).
+   and re-resolved `harness:`/`tier:` fields
+   (`../../harnesses/PROFILE-SPEC.md` resolution — the harness may
+   have changed since run N-1).
 3. Amend `spec.md` per the state-format amendment rules: set
    `status: draft` and `spec_version: N`; edit Requirements in place
    (revised keeps its R-id with a latest-only `(revised in vN)` marker;
