@@ -1,6 +1,8 @@
 # Verification Panel Reviewer Prompts (6 lenses)
 
-Dispatch all applicable reviewers **in parallel**, one fresh subagent each.
+Dispatch all applicable reviewers, one fresh agent each — in parallel
+on Tier A, sequentially on Tier B, as role-swaps on Tier C (tier
+protocols: `../../../harnesses/PROFILE-SPEC.md`).
 Replace `{SPEC_PATH}` with the absolute path to `.loopspace/spec.md`.
 
 Every prompt ends with the same reporting contract:

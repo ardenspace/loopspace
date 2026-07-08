@@ -51,7 +51,9 @@ verifier. Each task must have:
 
 ## Step 2 — Plan Review Panel
 
-Dispatch 3 fresh reviewer subagents in parallel. Reporting contract is the
+Dispatch 3 fresh reviewers — in parallel on Tier A, sequentially on
+Tier B, as role-swaps on Tier C (`../../harnesses/PROFILE-SPEC.md`).
+Reporting contract is the
 same as the spec panel (`[BLOCKING]` / `[NON-BLOCKING]` / `NO FINDINGS`,
 one line each):
 
@@ -80,8 +82,8 @@ approval — after this, the loop runs autonomously.** On approval:
 2. Rewrite `.loopspace/state.md` in its full form (state.md section of the
    format doc): `run_status: executing`, `current_phase: 1`,
    `current_task:` the first task's id, every task `pending` with
-   `attempts: 0`, and the three branch fields carried over unchanged (git
-   projects). Seed `## Project Facts` (test command, build/run command,
+   `attempts: 0`, and the `harness:`/`tier:` fields and the three branch
+   fields carried over unchanged (branch fields: git projects only). Seed `## Project Facts` (test command, build/run command,
    stack) from the spec's Engineer Lens — "none yet" is a valid value for a
    greenfield project.
 3. Initialize empty `.loopspace/journal.md` (header + version line).

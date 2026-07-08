@@ -75,7 +75,9 @@ resumable marker instead of a torn run:
    `state.md`, and `handoff.md` (if present) into it; **copy** `spec.md`
    in as a snapshot. The snapshot is the abort path's restore material —
    spec.md itself stays in place, about to be amended.
-2. Write a fresh header-only `state.md`: `run: N`, `run_status: spec`.
+2. Write a fresh header-only `state.md`: `run: N`, `run_status: spec`,
+   and re-resolved `harness:`/`tier:` fields (PROFILE-SPEC resolution —
+   the harness may have changed since run N-1).
 3. Amend `spec.md` per the state-format amendment rules: set
    `status: draft` and `spec_version: N`; edit Requirements in place
    (revised keeps its R-id with a latest-only `(revised in vN)` marker;
@@ -90,7 +92,8 @@ resumable marker instead of a torn run:
 
 ## Step 3 — Delta verification panel
 
-Dispatch **3 reviewers in parallel**, one fresh subagent each, using the
+Dispatch **3 fresh reviewers**, one per lens — in parallel on Tier A,
+sequentially on Tier B, as role-swaps on Tier C — using the
 prompts in `references/delta-panel.md`: coherence, adversarial,
 verifiability. Convergence loop as in loopspec: any `[BLOCKING]` finding
 → revise the amendment, re-panel, maximum 3 rounds; blocking findings
@@ -153,7 +156,8 @@ Present the delta plan; approve or revise. On approval:
    between this step and the next), do not append a second one.
 4. Rewrite `.loopspace/state.md` into the full execution form (state.md
    section of the format doc, mirroring loopplan's approval step): keep
-   `run: N`; set `run_status: executing`, `current_phase: 1`, and
+   `run: N` and the `harness:`/`tier:` fields; set
+   `run_status: executing`, `current_phase: 1`, and
    `current_task:` the first delta-plan task's id; write a `## Tasks`
    table listing every delta-plan task `pending` with `attempts: 0` and
    its risk tag; carry `## Project Facts` over verbatim from
@@ -174,7 +178,8 @@ Present the delta plan; approve or revise. On approval:
   current entry's `### vN — draft` heading to its approval form).
 - Never modify anything under `archive/` except the Step 4 abort
   restore.
-- The panel runs on the written amendment, with fresh subagents — never
-  review your own draft inline and call it a panel.
+- The panel runs on the written amendment, with fresh agents — never
+  review your own draft inline and call it a panel (Tier C: the
+  role-swap protocol, followed exactly).
 - Everything downstream of Step 6 belongs to /looprun. loopnext never
   dispatches implementers.

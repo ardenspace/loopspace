@@ -1,6 +1,8 @@
 # Delta Verification Panel (3 lenses)
 
-Dispatch all 3 reviewers **in parallel**, one fresh subagent each.
+Dispatch all 3 reviewers, one fresh agent each — in parallel on
+Tier A, sequentially on Tier B, as role-swaps on Tier C (tier
+protocols: `../../../harnesses/PROFILE-SPEC.md`).
 Replace `{SPEC_PATH}` with the absolute path to `.loopspace/spec.md`,
 `{JOURNAL_PATH}` with `.loopspace/journal.md`, and `{VN}` with the
 amendment's version (e.g. `v2`).

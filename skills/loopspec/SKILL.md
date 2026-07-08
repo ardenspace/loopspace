@@ -24,7 +24,7 @@ ask the human whether to archive the old run or abort.
 ```
 interview (4 lenses, one question at a time)
   → draft .loopspace/spec.md
-  → verification panel (6 reviewer subagents, one lens each)
+  → verification panel (6 fresh reviewers, one lens each)
   → convergence loop: blocking findings? revise draft, re-panel (max 3 rounds)
   → present to human: draft + remaining non-blocking findings
   → human approves → status: approved, branch + checkpoint commit
@@ -38,7 +38,8 @@ designer. Question banks: `references/interview-lenses.md`. Prefer multiple
 choice where natural.
 
 **Asking means waiting.** A question is delivered in exactly one of two
-ways: through the question tool (AskUserQuestion — preferred, with options),
+ways: through the harness's question tool if it has one (see the
+harness profile — preferred, with options),
 or as the final line of your turn, which then ends so the user can reply.
 The user's answer arrives in *their next message* — never earlier. A
 "question" you narrate mid-turn and move past in the same turn was never
@@ -79,6 +80,11 @@ answers. Depth over speed — this stage is never cost-reduced.
 
 Create `.loopspace/state.md` (header-only form, `run_status: spec`) if it
 does not exist — this is the resumable marker for the whole pipeline.
+Resolve the harness while you are at it: identify the harness running
+this session, read `../../harnesses/<harness-id>.md` relative to this
+skill's base directory (`generic.md` when nothing matches), and record
+`harness:` and `tier:` in state.md — resolution rules in
+`../../harnesses/PROFILE-SPEC.md`.
 
 Write `.loopspace/spec.md` in the exact format defined in
 `../../docs/state-format.md` relative to this skill's base directory
@@ -93,8 +99,10 @@ while drafting means going back to the interview, not papering over it.
 
 ## Step 3 — Verification Panel
 
-Dispatch **6 reviewer subagents in parallel**, one per lens, using the
-prompts in `references/panel-reviewers.md`: company, user, engineer,
+Dispatch **6 fresh reviewers**, one per lens — in parallel on Tier A,
+sequentially on Tier B, as role-swaps on Tier C (dispatch mechanics:
+harness profile; tier protocols: `../../harnesses/PROFILE-SPEC.md`) —
+using the prompts in `references/panel-reviewers.md`: company, user, engineer,
 designer (skip if lens was skipped), adversarial (red team), verifiability.
 
 Each returns findings tagged `[BLOCKING]` or `[NON-BLOCKING]`, or
@@ -145,5 +153,6 @@ On approval:
 - Never invent an answer the human didn't give; ask.
 - The panel runs on the *written draft*, not on your memory of the
   conversation.
-- Panel reviewers are fresh subagents; never review your own draft inline
-  and call it a panel.
+- Panel reviewers are fresh agents; never review your own draft inline
+  and call it a panel. (Tier C's sanctioned form is the role-swap
+  protocol, followed exactly — not casual self-review.)
