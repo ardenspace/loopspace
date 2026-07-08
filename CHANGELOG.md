@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.13.0 — 2026-07-08
+
+- **Harness portability (backlog item 7) — neutral core + adapter
+  pack.** The skills no longer name Claude Code primitives: every
+  "dispatch a fresh agent" resolves through a harness profile in
+  `harnesses/` (contract: `PROFILE-SPEC.md`). Capability tiers degrade
+  honestly — A: full pipeline (Claude Code, and Codex/OpenCode via
+  subprocess/subagent dispatch), B: panels run sequentially, C:
+  single-context role-swap protocol (the `generic.md` floor: any agent
+  that reads files and follows instructions, local LLMs included) —
+  and the tier is recorded in `state.md` (`harness:`/`tier:` fields)
+  and every report. Codex/OpenCode profiles ship `unverified` until a
+  real mini-run validates them. New: `docs/harness-support.md`
+  (support matrix, install walkthroughs, `LOOPSPACE_RESUME_CMD` values
+  per harness, model-capability guidance) and a portability lint
+  (`scripts/test/portability.test.sh`). Absent fields on an existing
+  run mean `claude-code`/`A` — no migration needed.
+
 ## 0.12.0 — 2026-07-08
 
 - **`/loopnext` — spec versioning between runs (backlog item 10).** The
