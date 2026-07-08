@@ -1,6 +1,6 @@
 # loopspace
 
-A spec-driven autonomous harness for Claude Code. **Keep context light, verify heavy.**
+A spec-driven autonomous harness — native to Claude Code, portable beyond it. **Keep context light, verify heavy.**
 
 ## The bet
 
@@ -256,10 +256,14 @@ verifies run N-1's code is actually under your HEAD before drafting
 (no deltas built on a tree without the MVP), and rejecting the amendment
 restores everything exactly as before.
 
-**Other harnesses (Codex, etc.)?** Not in v1 — this plugin targets Claude Code only. The
-`.loopspace/` state format (plain markdown, versioned, line-oriented) was designed to be
-harness-neutral so an adapter for another harness could read and write the same files
-later, but no such adapter exists yet.
+**Other harnesses (Codex, OpenCode, local LLMs)?** Yes — the skills are a
+harness-neutral core, and per-harness mechanics live in `harnesses/` (one profile
+each). Quality degrades honestly by capability tier: A = full pipeline, B = panels
+run sequentially, C = single-context role-swap — the tier is recorded in state.md
+and every report, so a weaker run never pretends otherwise. The `.loopspace/` state
+format is plain markdown, so a run started on one harness can resume on another.
+Install walkthroughs, the support matrix, and model-capability guidance:
+[`docs/harness-support.md`](docs/harness-support.md).
 
 ## License
 
