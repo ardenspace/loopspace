@@ -28,12 +28,16 @@ isolation, recorded honestly in state.md and every report.
 ### Codex CLI
 1. `git clone https://github.com/ardenspace/loopspace` somewhere
    stable.
-2. For each skill, create `~/.codex/prompts/<name>.md` containing one
-   line: `Read <checkout>/skills/<name>/SKILL.md and follow it
+2. For each skill, create `~/.agents/skills/<name>/SKILL.md` (Codex's
+   user-level Agent Skills directory — `~/.codex/prompts/` is
+   deprecated) with `name:`/`description:` frontmatter and a one-line
+   body: `Read <checkout>/skills/<name>/SKILL.md and follow it
    exactly.` Cover loopspec, loopplan, looprun, loopresume, loopnext;
    skip loopupdate (Claude Code-only) and loopsupervise unless you
    run unattended.
-3. Update: `git pull` in the checkout — the stubs need no change.
+3. Invoke via the `$<name>` mention or the `/skills` picker (no
+   per-skill slash commands in Codex).
+4. Update: `git pull` in the checkout — the stubs need no change.
 
 ### OpenCode
 Same as Codex, with stubs in `.opencode/command/` (or the global
