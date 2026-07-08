@@ -212,8 +212,8 @@ field and example, are in [`docs/state-format.md`](docs/state-format.md).
 |---|---|
 | `spec.md` | The approved spec: lens sections, requirements, approval record. Frozen after approval. |
 | `plan.md` | Phase → task tree with acceptance criteria and risk tags. Frozen after approval except recorded re-plans. |
-| `state.md` | Run status from spec stage onward, current phase/task pointer, per-task status and attempt counts, project facts (test/build commands) injected into every subagent. |
-| `journal.md` | Append-only log across runs: every task attempt, verdict, TDD evidence, files changed — run headers scope each run's entries. |
+| `state.md` | Run status from spec stage onward, harness and capability tier, current phase/task pointer, per-task status and attempt counts, project facts (test/build commands) injected into every subagent. |
+| `journal.md` | Append-only log across runs: every task attempt, verdict, TDD evidence, files changed, harness switches — run headers scope each run's entries. |
 | `archive/run-<N>/` | Prior runs' plan/state/handoff plus a spec snapshot, moved aside by `/loopnext` when the next run opens. |
 | `handoff.md` | Notes for the next session, overwritten at phase boundaries and at the context threshold. |
 | `report.md` | Halt report — progress, blocker, and options — written only when the run halts. |
@@ -261,8 +261,12 @@ harness-neutral core, and per-harness mechanics live in `harnesses/` (one profil
 each). Quality degrades honestly by capability tier: A = full pipeline, B = panels
 run sequentially, C = single-context role-swap — the tier is recorded in state.md
 and every report, so a weaker run never pretends otherwise. The `.loopspace/` state
-format is plain markdown, so a run started on one harness can resume on another.
-Install walkthroughs, the support matrix, and model-capability guidance:
+format is plain markdown, so a run started on one harness can resume on another —
+`/loopresume` detects the switch and journals it. Slash commands are Claude Code's
+spelling: on Codex the skills install as one-line stubs under `~/.agents/skills/`
+and are invoked with a `$<name>` mention or the `/skills` picker (Codex gives
+skills no per-skill slash commands). Install walkthroughs, the support matrix,
+and model-capability guidance:
 [`docs/harness-support.md`](docs/harness-support.md).
 
 ## License
