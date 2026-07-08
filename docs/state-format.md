@@ -7,12 +7,14 @@ run exactly. Formats are line-oriented so they can be parsed with grep/sed.
 Every file's first body line is `version: 1`. Consumers must check it and
 refuse to guess on unknown versions.
 
-## spec.md — written by loopspec, frozen after approval
+## spec.md — written by loopspec, frozen after approval; amended between runs by loopnext
 
 ```markdown
 # Spec: <project name>
-version: 1
+version: 1                  # file-format version (this document's axis)
 status: approved            # draft | approved
+spec_version: 2             # content version; absent = 1. Bumped only by
+                            # loopnext, between runs — never during one.
 
 ## Overview
 <2-4 sentences>
@@ -44,6 +46,33 @@ strategy, over-engineering boundaries>
 Approved by human on <YYYY-MM-DD>. Open non-blocking issues at approval:
 - <finding or "none">
 ```
+
+Amendment rules (loopnext only — the spec is still frozen *within* a run):
+
+- Requirements are edited **in place**; the Requirements section is always
+  the current truth, because looprun excerpts it by R-id into dispatches.
+- A revised requirement keeps its R-id and carries the marker
+  `(revised in vN)` — the **latest marker only**; full history lives in
+  the Amendment Log, markers never accumulate.
+- A dropped requirement keeps its line, prefixed `[dropped in vN]` —
+  numbering holes stay explained, old journal references stay resolvable.
+  Dropped R-ids are never reused.
+- New requirements continue the numbering (`R8`, `R9`, …).
+- Lens sections are updated in place only where the delta touches them.
+- The `## Amendment Log` section is append-only:
+
+```markdown
+## Amendment Log
+
+### v2 — <YYYY-MM-DD>, approved by human
+- R8 added: <one-line rationale> (origin: human feedback)
+- R3 revised: <one-line rationale> (origin: spec-concern [2.4])
+- R5 dropped: <one-line rationale> (origin: structure-note phase 2)
+```
+
+Every entry names its origin — `human feedback`, `structure-note <where>`,
+or `spec-concern <where>` — so whether the advisory pipeline is actually
+consumed stays auditable.
 
 ## plan.md — written by loopplan, frozen after approval except recorded re-plans
 
@@ -94,6 +123,8 @@ The pre-approval, header-only form (no branch fields):
 ```markdown
 # Loopspace State
 version: 1
+run: 2                      # which run this state belongs to; absent = 1.
+                            # Written by loopnext when it opens run N.
 run_status: spec            # spec | planning | executing | halted | complete
 ```
 
@@ -145,6 +176,13 @@ them whenever an implementer reports a differing fact.
 # Journal
 version: 1
 
+# ── Run 2 — opened <YYYY-MM-DD> (spec v2) ──   <!-- written by loopnext;
+                                     entries before the first run header
+                                     belong to run 1 -->
+## [loopnext] run 2 opened
+- amendment: <one line — what changed, spec_version>
+- adopted advisories: <adopted structure-note/spec-concern summary, or "none">
+
 ## [1.1] attempt 1 — PASS
 - implementer: <one-line summary>
 - tdd-evidence: <test file>:<first-fail confirmed>
@@ -182,6 +220,9 @@ version: 1
 
 ## [halt] resolved — <one line: the human's decision that cleared the halt>
 ```
+
+Task ids restart at 1.1 inside each run; the nearest run header above an
+entry scopes it.
 
 ## handoff.md — overwritten at phase boundaries and at the context threshold
 
@@ -233,4 +274,31 @@ shown to implementers.>
 
 ## Awaiting
 Human decision. Re-run /looprun after resolving.
+```
+
+## archive/ — prior runs, written only by loopnext
+
+When loopnext opens run N it moves the finished run's per-run files
+aside and snapshots the spec **before** drafting the amendment, so a
+crash at any later point leaves a resumable marker (fresh header-only
+state.md with `run: N`) instead of a torn run:
+
+```
+.loopspace/archive/run-<N-1>/
+  spec.md      # snapshot at run N-1 completion — the abort path's
+               # restore material (git restore can't cover non-git projects)
+  plan.md      # moved
+  state.md     # moved, final form (run_status: complete)
+  handoff.md   # moved, if present
+```
+
+`spec.md` and `journal.md` themselves are persistent — they live across
+runs at the top level (the spec is amended in place; the journal appends
+under run headers). `report.md` never appears here: it only exists on a
+halt and halt-resume deletes it.
+
+Restore contract (loopnext's amendment-rejected abort): copying
+`archive/run-<N-1>/` contents back over `.loopspace/` and deleting the
+run-N state.md and the emptied archive dir must reproduce the
+pre-loopnext state exactly.
 ```
