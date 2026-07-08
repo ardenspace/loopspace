@@ -132,6 +132,10 @@ version: 1
 run: 2                      # which run this state belongs to; absent = 1.
                             # Written by loopnext when it opens run N.
 run_status: spec            # spec | planning | executing | halted | complete
+harness: claude-code        # harness profile id (harnesses/ in the loopspace
+                            # checkout); absent = claude-code (pre-0.13 run)
+tier: A                     # A | B | C — dispatch capability from the
+                            # profile; absent = A
 ```
 
 Added at spec approval (git projects only) — the three branch fields:
@@ -150,6 +154,8 @@ From plan approval on, the full form, rewritten by looprun after every task:
 version: 1
 run: 2                      # absent = 1; rewriters preserve it
 run_status: executing
+harness: claude-code
+tier: A
 current_phase: 2
 current_task: 2.3
 base_branch: main
@@ -169,13 +175,14 @@ current_branch: loopspace/feat-x/phase-2
 ```
 
 Header fields a rewriter does not own are preserved verbatim —
-looprun's per-task rewrites must not drop `run:`.
+looprun's per-task rewrites must not drop `run:`, `harness:`, or
+`tier:`.
 
 `status` values: `pending | in_progress | done | failed`. `failed` is set
 only on the task that triggered a halt; the halt-resume procedure in looprun
 resets it to `pending` (attempts 0) when the human resolves the halt.
 
-Project Facts exist so fresh subagents never re-discover the repo: loopplan
+Project Facts exist so fresh agents never re-discover the repo: loopplan
 seeds them from the spec's Engineer Lens (a greenfield project may start
 with "none yet"), looprun injects them into every dispatch and corrects
 them whenever an implementer reports a differing fact.
@@ -262,6 +269,8 @@ after its content is journaled
 version: 1
 written: <YYYY-MM-DD>
 trigger: spec-gap           # task-stall | phase-stall | spec-gap | external-blocker
+harness: claude-code        # what actually ran — the honesty rule in
+tier: A                     # harnesses/PROFILE-SPEC.md
 current_branch: loopspace/<slug>/phase-3   # git projects only
 last_verified_phase: loopspace/<slug>/phase-2   # newest phase branch whose
                             # boundary verification passed, or "none" —
@@ -285,7 +294,7 @@ as spec design. Advisory for the human only — never a halt cause, never
 shown to implementers.>
 
 ## Awaiting
-Human decision. Re-run /looprun after resolving.
+Human decision. Resume the run after resolving.
 ```
 
 ## archive/ — prior runs, written only by loopnext
