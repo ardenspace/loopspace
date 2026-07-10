@@ -2,8 +2,11 @@
 
 id: opencode
 tier: A
-verified: unverified — mapped from OpenCode documentation; validate
-with a mini-run, then update this line with the date.
+verified: 2026-07-10 — subcut mini-run, 4 light tasks on
+ornith-1.0-35b-Q5_K_M (all roles: orchestrator, implementer, verifier).
+Verifier honesty confirmed: caught a real import-setup miss during the run
+and a deliberately planted green-but-wrong test/impl trap. Heavy panel and
+ambiguous specs not yet exercised on this harness.
 
 ## Dispatch
 OpenCode has subagent primitives: invoke a task-scoped agent with the
