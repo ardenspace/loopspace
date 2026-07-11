@@ -1,7 +1,11 @@
 # Agent Prompt Templates
 
-Replace `{...}` placeholders before dispatch. Keep each dispatch
-self-contained: dispatched agents have NO conversation context.
+Replace `{...}` placeholders before dispatch. Everything outside the
+braces is fixed prompt text — dispatch it verbatim, never summarized,
+trimmed, or dropped. The sentences directly after a placeholder
+(contracts, warnings, contest rules) are the enforcement half of the
+block they follow: filling a placeholder never removes them. Keep each
+dispatch self-contained: dispatched agents have NO conversation context.
 
 ## Template A — Implementer
 

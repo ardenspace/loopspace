@@ -29,7 +29,9 @@ below. `run_status: complete` → say so, stop. All file formats:
 - **Diet:** consume verdicts, one-line summaries, and file lists. Never
   request or accept code dumps, diffs, or full test output into your own
   context. The prompts in `references/agent-prompts.md` enforce the report
-  shape.
+  shape. Templates go out whole: fill the `{...}` placeholders, keep every
+  fixed sentence around them verbatim — dropping the contract text under
+  a filled block disarms the check it announces.
 - Update `state.md` and `journal.md` after **every** task, before
   dispatching the next. A crash must never lose more than one task of
   progress.
