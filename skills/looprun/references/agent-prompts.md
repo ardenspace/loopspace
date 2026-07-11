@@ -243,7 +243,8 @@ PROJECT FACTS:
 {Project Facts block from state.md: test command, build/run command, stack}
 
 PHASE: {phase block from plan.md, including the phase acceptance line}
-TASKS COMPLETED: {task ids + one-line summaries from journal.md}
+TASKS COMPLETED: {task ids + one-line summaries + exports: lines from
+journal.md}
 NEXT PHASE: {next phase block from plan.md verbatim, task blocks included
 — or "none: this is the last phase"}
 
@@ -254,12 +255,20 @@ CHECKS:
 3. Integration seams: do the tasks' pieces reference each other correctly
    (names, types, contracts)? Grep for TODO/FIXME left in changed files.
 4. Cross-task scope drift: does the sum of tasks match the phase goal?
-5. Structural economy (advisory — never affects the verdict): are the
+5. Intra-phase duplication (affects the verdict): did a later task in
+   this phase re-implement in parallel a capability an earlier task
+   built — twin classes/functions doing the same job, or scaffolding
+   copied from an earlier task that is written but never read (dead
+   indexes, dead fields)? Judge from the exports lines and the tree.
+   Exclude separate implementations the acceptance criteria explicitly
+   required, and seams required for test isolation. FAIL → offending-task
+   is the later task; findings name what it should have extended.
+6. Structural economy (advisory — never affects the verdict): are the
    files and indirection layers this phase created proportionate to what
    it shipped? Flag files that could be merged and abstractions with a
    single caller. Do not flag seams the acceptance criteria required
    (test isolation, injected fakes).
-6. Plan freshness (advisory — never affects the verdict; skip if NEXT
+7. Plan freshness (advisory — never affects the verdict; skip if NEXT
    PHASE is none): read the next phase's task blocks against the tree as
    it now stands. Flag: acceptance criteria the current code already
    satisfies, `files:` references that no longer match the real
