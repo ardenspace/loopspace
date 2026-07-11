@@ -49,6 +49,12 @@ verifier. Each task must have:
   integration, anything touching a trust boundary). **When in doubt, tag
   heavy.**
 
+When a later task builds on an earlier task's output, name the dependency
+in its task block (e.g. an acceptance line "extends Store from 1.1"). The
+loop carries prior-task exports into every dispatch either way; naming it
+at plan time removes the ambiguity that invites a parallel
+re-implementation.
+
 ## Step 2 — Plan Review Panel
 
 Dispatch 3 fresh reviewers — in parallel on Tier A, sequentially on

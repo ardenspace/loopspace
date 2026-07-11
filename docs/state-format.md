@@ -206,6 +206,9 @@ version: 1
 - tdd-evidence: <test file>:<first-fail confirmed>
 - verifier: PASS — <one-line note>
 - files: <comma-separated changed files>
+- exports: <public symbols the task added or changed for use outside it,
+  module-qualified — or "none". looprun assembles the next dispatches'
+  PRIOR WORK THIS PHASE block from these lines>
 - spec-concern: <optional, advisory — verbatim from the verifier: R-id or
   criterion that is correctly implemented but questionable as spec design;
   surfaces to the human in the halt or run-complete report>
