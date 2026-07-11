@@ -124,7 +124,11 @@ CHECKS (mechanical):
    contests that dispute a judgment call or carry no concrete evidence.
 6. Prior-work reuse: if PRIOR WORK THIS PHASE lists an export that already
    provides something this task needed, the implementation must import or
-   extend it. A parallel re-implementation — a class/function duplicating
+   extend it. The exports lines are earlier implementers' self-reports,
+   never verified — confirm in the code that the export actually provides
+   the capability, and judge from the tree, not the listed line; an export
+   that over-claims makes re-implementation legitimate, not a finding.
+   A parallel re-implementation — a class/function duplicating
    a listed capability, or scaffolding copied from it that is written but
    never read — is a FAIL naming what should have been extended, unless
    the acceptance criteria explicitly require a separate implementation.
@@ -201,7 +205,11 @@ CHECKS — correctness lens (the only lens that runs commands):
    repository → skip this check and say so in your note.
 5. Prior-work reuse: if PRIOR WORK THIS PHASE lists an export that already
    provides something this task needed, the implementation must import or
-   extend it. A parallel re-implementation — a class/function duplicating
+   extend it. The exports lines are earlier implementers' self-reports,
+   never verified — confirm in the code that the export actually provides
+   the capability, and judge from the tree, not the listed line; an export
+   that over-claims makes re-implementation legitimate, not a finding.
+   A parallel re-implementation — a class/function duplicating
    a listed capability, or scaffolding copied from it that is written but
    never read — is a FAIL naming what should have been extended, unless
    the acceptance criteria explicitly require a separate implementation.

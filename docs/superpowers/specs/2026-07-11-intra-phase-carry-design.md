@@ -47,9 +47,13 @@ phase-boundary/context-threshold에만 쓰이므로 태스크-간(intra-phase)
 2. **범위: intra-phase만.** PRIOR WORK 블록은 현재 phase의 done 태스크만
    담는다. payload가 phase 크기로 유계 — diet 유지. cross-phase 중복은
    이번 범위 밖 (아래 보류 참조).
-3. **exports는 자가보고, 검증 안 함.** 부정확한 exports는 다음 디스패치의
-   정보만 약화시킬 뿐 verdict에 안 걸림 — verifier에 검증 규칙을 추가하지
-   않는다 (verify-heavy 원칙의 예외지만, 검증 비용 대비 오류 피해가 작음).
+3. **exports는 자가보고, 검증 안 함.** verifier에 exports 정확성 검증
+   규칙을 추가하지 않는다 (verify-heavy 원칙의 예외지만, 검증 비용 대비
+   오류 피해가 작음). 단, exports 라인은 reuse 체크(B-6/D-5/C-5)의
+   verdict 판정 입력이기도 하므로 — "정보만 약화"가 아니다 — 체크 문구가
+   라인이 아니라 트리에서 실제 제공 여부를 확인하고 판정하라고 명시한다.
+   과대보고된 export가 다음 태스크의 정당한 구현을 false FAIL시키는
+   경로를 닫는 보강 (2026-07-11 리뷰 후속).
 4. **기존 advisory는 그대로.** check 5 structural-economy와 spec-concern
    채널은 문구도 지위도 불변. blocking 항목은 별도 신설 — advisory 채널이
    "사실 반쯤 blocking"이 되는 오염을 피한다.
