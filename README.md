@@ -91,6 +91,11 @@ restart at a stable point — task cycle done or handoff written.)
 - **Fresh subagent per task.** Every task gets a brand-new implementer, even if the
   previous one finished with context to spare. Workers are never reused across tasks —
   that's what keeps a bad assumption in task 2 from quietly leaking into task 5.
+  Isolation isn't amnesia, though: every dispatch carries a "prior work this phase"
+  block — the files and exported symbols of every finished task in the current phase,
+  self-reported by implementers and assembled from the journal — with a hard contract:
+  extend what exists. A parallel re-implementation is a verifier FAIL, at the task
+  level first and again at the phase boundary.
 - **Independent verification.** Fresh subagents that never wrote the code check the work
   and trust nothing in the implementer's report. Light tasks get one verifier running the
   mechanical baseline: re-run the tests, map every acceptance criterion to a test that
@@ -116,7 +121,9 @@ restart at a stable point — task cycle done or handoff written.)
   evidence — a task without it hasn't actually proven anything.
 - **Phase boundaries verify in both directions.** When a phase's last task lands, a
   fresh phase verifier runs the full suite and checks the seams between tasks — pieces
-  that passed in isolation still have to hold together. It also emits two advisories
+  that passed in isolation still have to hold together. Intra-phase duplication — a
+  later task re-implementing what an earlier task built instead of extending it — fails
+  the phase and re-opens the later task. It also emits two advisories
   that never flip the verdict: structural economy (are the files and indirection layers
   this phase created proportionate to what it shipped?) and plan freshness (do the
   *next* phase's task blocks still match reality — criteria the current code already
