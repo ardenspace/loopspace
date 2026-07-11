@@ -21,6 +21,15 @@ notes if risk: heavy}
 HANDOFF NOTES (from previous work):
 {handoff.md "Next session must know" + "Watch out for" bullets, or "none"}
 
+PRIOR WORK THIS PHASE (already in the tree, built by earlier tasks):
+{one line per done task in the current phase, assembled from journal.md:
+"[<id>] files: <files> — exports: <exports>" — or "none yet: you are the
+first task of this phase"}
+If a listed export already provides something this task needs, import or
+extend it — never build a parallel implementation. Re-implementing a
+listed capability is a verifier FAIL, unless this task's acceptance
+criteria explicitly require a separate implementation.
+
 PRIOR VERIFIER FINDINGS (retry only):
 {verifier findings from the failed attempt, or "first attempt"}
 If a finding is factually wrong — it misreads code you can point at, or
@@ -73,6 +82,9 @@ REPORT BACK (exactly this shape, nothing more):
 - tdd-evidence: <test file> failed-first: <the one-line failure header
   from step 2>
 - files: <comma-separated files created/modified>
+- exports: <public symbols this task added or changed for use outside it,
+  module-qualified, one line (e.g. "kvtx.database.Store — set/get/delete/
+  count, O(1) two-dict") — or "none">
 - facts: <only if a PROJECT FACTS line is wrong/missing: the correction>
 - contested: <only on retry, only if a prior finding is factually wrong:
   the finding number + one line of evidence (file:line or command output).
