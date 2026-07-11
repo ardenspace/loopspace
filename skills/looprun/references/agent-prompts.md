@@ -21,6 +21,15 @@ notes if risk: heavy}
 HANDOFF NOTES (from previous work):
 {handoff.md "Next session must know" + "Watch out for" bullets, or "none"}
 
+PRIOR WORK THIS PHASE (already in the tree, built by earlier tasks):
+{one line per done task in the current phase, assembled from journal.md:
+"[<id>] files: <files> — exports: <exports>" — or "none yet: you are the
+first task of this phase"}
+If a listed export already provides something this task needs, import or
+extend it — never build a parallel implementation. Re-implementing a
+listed capability is a verifier FAIL, unless this task's acceptance
+criteria explicitly require a separate implementation.
+
 PRIOR VERIFIER FINDINGS (retry only):
 {verifier findings from the failed attempt, or "first attempt"}
 If a finding is factually wrong — it misreads code you can point at, or
@@ -73,6 +82,9 @@ REPORT BACK (exactly this shape, nothing more):
 - tdd-evidence: <test file> failed-first: <the one-line failure header
   from step 2>
 - files: <comma-separated files created/modified>
+- exports: <public symbols this task added or changed for use outside it,
+  module-qualified, one line (e.g. "kvtx.database.Store — set/get/delete/
+  count, O(1) two-dict") — or "none">
 - facts: <only if a PROJECT FACTS line is wrong/missing: the correction>
 - contested: <only on retry, only if a prior finding is factually wrong:
   the finding number + one line of evidence (file:line or command output).
@@ -96,6 +108,9 @@ IMPLEMENTER REPORT:
 CONTESTED FINDINGS (retry only):
 {contested: lines from the implementer's report, or "none"}
 
+PRIOR WORK THIS PHASE (already in the tree, built by earlier tasks):
+{same block the implementer received — or "none yet"}
+
 CHECKS (mechanical):
 1. Re-run the tests yourself. They must pass.
 2. Map criteria → tests: every acceptance criterion has at least one test
@@ -107,6 +122,13 @@ CHECKS (mechanical):
    either confirm the finding (say why the evidence doesn't hold) or drop
    it — a dropped finding must not count against this verdict. Ignore
    contests that dispute a judgment call or carry no concrete evidence.
+6. Prior-work reuse: if PRIOR WORK THIS PHASE lists an export that already
+   provides something this task needed, the implementation must import or
+   extend it. A parallel re-implementation — a class/function duplicating
+   a listed capability, or scaffolding copied from it that is written but
+   never read — is a FAIL naming what should have been extended, unless
+   the acceptance criteria explicitly require a separate implementation.
+   Block says "none yet" → skip this check.
 
 REPORT BACK (exactly this shape):
 - verdict: PASS | FAIL
@@ -149,6 +171,9 @@ IMPLEMENTER REPORT:
 CONTESTED FINDINGS (retry only):
 {contested: lines from the implementer's report, or "none"}
 
+PRIOR WORK THIS PHASE (already in the tree, built by earlier tasks):
+{same block the implementer received — or "none yet"}
+
 YOUR LENS: {correctness | security | test-integrity}
 
 ALL LENSES — contested findings: if a contested finding falls in your
@@ -174,6 +199,13 @@ CHECKS — correctness lens (the only lens that runs commands):
    that still pass without the implementation don't exercise it: FAIL,
    naming those tests. No implementation files in the list, or not a git
    repository → skip this check and say so in your note.
+5. Prior-work reuse: if PRIOR WORK THIS PHASE lists an export that already
+   provides something this task needed, the implementation must import or
+   extend it. A parallel re-implementation — a class/function duplicating
+   a listed capability, or scaffolding copied from it that is written but
+   never read — is a FAIL naming what should have been extended, unless
+   the acceptance criteria explicitly require a separate implementation.
+   Block says "none yet" → skip this check.
 
 CHECKS — security lens (read-only, never run the test suite):
 1. Secret scan: no hardcoded credentials/keys/tokens in changed files.
@@ -211,7 +243,8 @@ PROJECT FACTS:
 {Project Facts block from state.md: test command, build/run command, stack}
 
 PHASE: {phase block from plan.md, including the phase acceptance line}
-TASKS COMPLETED: {task ids + one-line summaries from journal.md}
+TASKS COMPLETED: {task ids + one-line summaries + exports: lines from
+journal.md}
 NEXT PHASE: {next phase block from plan.md verbatim, task blocks included
 — or "none: this is the last phase"}
 
@@ -222,12 +255,20 @@ CHECKS:
 3. Integration seams: do the tasks' pieces reference each other correctly
    (names, types, contracts)? Grep for TODO/FIXME left in changed files.
 4. Cross-task scope drift: does the sum of tasks match the phase goal?
-5. Structural economy (advisory — never affects the verdict): are the
+5. Intra-phase duplication (affects the verdict): did a later task in
+   this phase re-implement in parallel a capability an earlier task
+   built — twin classes/functions doing the same job, or scaffolding
+   copied from an earlier task that is written but never read (dead
+   indexes, dead fields)? Judge from the exports lines and the tree.
+   Exclude separate implementations the acceptance criteria explicitly
+   required, and seams required for test isolation. FAIL → offending-task
+   is the later task; findings name what it should have extended.
+6. Structural economy (advisory — never affects the verdict): are the
    files and indirection layers this phase created proportionate to what
    it shipped? Flag files that could be merged and abstractions with a
    single caller. Do not flag seams the acceptance criteria required
    (test isolation, injected fakes).
-6. Plan freshness (advisory — never affects the verdict; skip if NEXT
+7. Plan freshness (advisory — never affects the verdict; skip if NEXT
    PHASE is none): read the next phase's task blocks against the tree as
    it now stands. Flag: acceptance criteria the current code already
    satisfies, `files:` references that no longer match the real

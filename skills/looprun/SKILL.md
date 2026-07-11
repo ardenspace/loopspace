@@ -61,7 +61,15 @@ below. `run_status: complete` → say so, stop. All file formats:
 next task = first non-done task in plan order
 1. Dispatch IMPLEMENTER (fresh) — prompt template A in references/agent-prompts.md
    - carries: Project Facts, spec excerpt (only the R-ids this task
-     covers), the task block from plan.md, current handoff.md notes
+     covers), the task block from plan.md, current handoff.md notes,
+     and the PRIOR WORK THIS PHASE block — assembled from journal.md:
+     one line per done task in the current phase, its `files:` and
+     `exports:` lines verbatim ("none yet" on the phase's first task;
+     done means done in state.md — a task re-opened by a phase FAIL is
+     not; use a task's latest PASS entry when retries left several;
+     an old journal entry without an exports line contributes files
+     only). Assembly reads the journal, never project code — the diet
+     holds.
    - staged contract: UNDERSTAND → PLAN → TDD (failing tests first,
      evidence required)
 2. Implementer BLOCKED? Classify the blocker line:
@@ -73,6 +81,8 @@ next task = first non-done task in plan order
    - anything else → counts as a failed attempt: attempts += 1, journal
      the blocker, retry with a new fresh implementer carrying it
 3. Dispatch VERIFICATION (fresh, never the implementer)
+   - every verifier dispatch carries the same PRIOR WORK THIS PHASE
+     block the implementer received
    - risk: light → one verifier, template B
    - risk: heavy → three-lens panel, template D, in two waves: dispatch
      security + test-integrity in ONE message (both read-only, safe in
@@ -91,7 +101,8 @@ next task = first non-done task in plan order
      Never adjudicate a contest yourself — re-deriving facts is the
      verifier's job, and your diet stays.
 4. PASS → state.md: task done; git checkpoint commit; journal entry
-   (heavy: record all three lens verdicts); next task (fresh implementer)
+   including the implementer's `exports:` line (heavy: record all three
+   lens verdicts); next task (fresh implementer)
    FAIL → attempts += 1; journal the verifier findings; retry with a NEW
    fresh implementer that receives those findings (template A, findings
    section filled)

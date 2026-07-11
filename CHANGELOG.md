@@ -1,5 +1,30 @@
 # Changelog
 
+## 0.14.0 — 2026-07-11
+
+- **Intra-phase carry — prior-task outputs reach every dispatch.** The
+  kvtx dogfood run (solo-vs-loopspace A/B) showed fresh-agent isolation
+  creating duplicate/dead code *between tasks of the same phase*: task
+  1.2's fresh implementer, told nothing about task 1.1's `Store`, rebuilt
+  it as `Database` with an orphaned `_vk` index — and the phase verifier's
+  advisory-only structural check waved it through as "proportionate".
+  handoff.md only exists at phase boundaries and context thresholds, so
+  the task-to-task seam carried nothing. Now: implementers self-report an
+  `exports:` line (journaled; the orchestrator still never reads code),
+  every implementer *and* verifier dispatch carries a PRIOR WORK THIS
+  PHASE block assembled from the journal's `files:`/`exports:` lines, and
+  a parallel re-implementation of a listed capability is a FAIL at two
+  layers — the task verifier (template B check 6 / template D correctness
+  check 5) catches it first, and a new *blocking* template C check 5
+  (intra-phase duplication, offending-task = the later task) backstops
+  the phase. Existing advisories (structural economy, plan freshness)
+  keep their wording and advisory status, renumbered to 6/7. loopplan
+  gains a nudge to name task dependencies ("extends Store from 1.1") at
+  decomposition time. Old journals without `exports:` lines degrade
+  gracefully (files-only blocks); acceptance criteria that explicitly
+  require a separate implementation are exempt from all duplication
+  checks.
+
 ## 0.13.0 — 2026-07-08
 
 - **Harness portability (backlog item 7) — neutral core + adapter
