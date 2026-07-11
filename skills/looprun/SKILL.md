@@ -65,6 +65,8 @@ next task = first non-done task in plan order
      and the PRIOR WORK THIS PHASE block — assembled from journal.md:
      one line per done task in the current phase, its `files:` and
      `exports:` lines verbatim ("none yet" on the phase's first task;
+     done means done in state.md — a task re-opened by a phase FAIL is
+     not; use a task's latest PASS entry when retries left several;
      an old journal entry without an exports line contributes files
      only). Assembly reads the journal, never project code — the diet
      holds.
