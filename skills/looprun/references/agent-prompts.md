@@ -108,6 +108,9 @@ IMPLEMENTER REPORT:
 CONTESTED FINDINGS (retry only):
 {contested: lines from the implementer's report, or "none"}
 
+PRIOR WORK THIS PHASE (already in the tree, built by earlier tasks):
+{same block the implementer received — or "none yet"}
+
 CHECKS (mechanical):
 1. Re-run the tests yourself. They must pass.
 2. Map criteria → tests: every acceptance criterion has at least one test
@@ -119,6 +122,13 @@ CHECKS (mechanical):
    either confirm the finding (say why the evidence doesn't hold) or drop
    it — a dropped finding must not count against this verdict. Ignore
    contests that dispute a judgment call or carry no concrete evidence.
+6. Prior-work reuse: if PRIOR WORK THIS PHASE lists an export that already
+   provides something this task needed, the implementation must import or
+   extend it. A parallel re-implementation — a class/function duplicating
+   a listed capability, or scaffolding copied from it that is written but
+   never read — is a FAIL naming what should have been extended, unless
+   the acceptance criteria explicitly require a separate implementation.
+   Block says "none yet" → skip this check.
 
 REPORT BACK (exactly this shape):
 - verdict: PASS | FAIL
@@ -161,6 +171,9 @@ IMPLEMENTER REPORT:
 CONTESTED FINDINGS (retry only):
 {contested: lines from the implementer's report, or "none"}
 
+PRIOR WORK THIS PHASE (already in the tree, built by earlier tasks):
+{same block the implementer received — or "none yet"}
+
 YOUR LENS: {correctness | security | test-integrity}
 
 ALL LENSES — contested findings: if a contested finding falls in your
@@ -186,6 +199,13 @@ CHECKS — correctness lens (the only lens that runs commands):
    that still pass without the implementation don't exercise it: FAIL,
    naming those tests. No implementation files in the list, or not a git
    repository → skip this check and say so in your note.
+5. Prior-work reuse: if PRIOR WORK THIS PHASE lists an export that already
+   provides something this task needed, the implementation must import or
+   extend it. A parallel re-implementation — a class/function duplicating
+   a listed capability, or scaffolding copied from it that is written but
+   never read — is a FAIL naming what should have been extended, unless
+   the acceptance criteria explicitly require a separate implementation.
+   Block says "none yet" → skip this check.
 
 CHECKS — security lens (read-only, never run the test suite):
 1. Secret scan: no hardcoded credentials/keys/tokens in changed files.
