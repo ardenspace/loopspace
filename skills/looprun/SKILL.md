@@ -194,18 +194,30 @@ human resolved a halt:
 
 When the last task of a phase is done:
 
-1. Dispatch a **PHASE VERIFIER** (fresh) — template C: full test suite,
-   phase acceptance line from plan.md, cross-task integration. The
-   dispatch carries the next phase's block from plan.md (template C's
+1. Dispatch a **PHASE VERIFIER** (fresh) — template C: spec probes
+   derived from the full spec BEFORE any exposure to the implementers'
+   tests, full test suite, phase acceptance line from plan.md, cross-task
+   integration, mutation spot-check (git projects). The dispatch carries
+   the full spec.md text, the union of `covers:` R-ids across this and
+   all earlier phases (template C's COVERED SO FAR input — the probe
+   boundary), and the next phase's block from plan.md (template C's
    NEXT PHASE input, "none" on the last phase) for the freshness
-   advisory.
+   advisory. The probes exist because implementation and tests can share
+   one mind's blind spot: the implementer-written suite is never accepted
+   as evidence for a spec-level claim.
 2. FAIL → treat as a failed task on the offending task id (it re-enters
-   the per-task cycle with the findings). **Maximum 3 phase-verification
-   rounds per phase** — fixing task A can break task B and ping-pong
-   forever; a 4th FAIL halts (`report.md`, trigger: `phase-stall`).
+   the per-task cycle with the findings). A failing probe travels twice:
+   as a findings line (input, spec line, actual) and as the probe file
+   left in the tree — the re-opened task's fix must turn it green; an
+   implementer who can show a probe misreads the spec contests it like
+   any finding, and the next verifier re-derives from the spec text.
+   **Maximum 3 phase-verification rounds per phase** — fixing task A can
+   break task B and ping-pong forever; a 4th FAIL halts (`report.md`,
+   trigger: `phase-stall`).
 3. PASS → do this for **every** phase, the last one included: journal
-   `[phase N] verified` (append the verifier's `structure-note`,
-   `freshness-note`, and `spec-concern` lines verbatim, if any); overwrite
+   `[phase N] verified` (append the verifier's `probes:` and `mutation:`
+   lines, and its `structure-note`, `freshness-note`, and `spec-concern`
+   lines verbatim, if any); overwrite
    `handoff.md`
    (trigger: `phase-boundary`), carrying forward every previous-handoff
    item that is still true — phase 1's flaky-test warning must survive
@@ -214,8 +226,11 @@ When the last task of a phase is done:
    freshness-note never changes plan.md and never triggers a re-plan by
    itself: if the suspicion is real, the implementer hits it and the
    existing blocked/stall routes handle it; commit the boundary
-   (`loopspace: phase <N> verified`) so the phase journal entry and fresh
-   handoff are checkpointed, not riding uncommitted into the next phase.
+   (`loopspace: phase <N> verified`) so the phase journal entry, fresh
+   handoff, and the phase's probe file are checkpointed, not riding
+   uncommitted into the next phase. The committed probes join the suite
+   as a regression floor for later phases — but they are never evidence
+   at the next boundary: each phase verifier derives its own, fresh.
    Then branch **only if a next phase exists** — git projects, create
    `loopspace/<slug>/phase-<N+1>` on that boundary commit, check it out,
    and update `current_branch` in state.md, so each completed phase's tip

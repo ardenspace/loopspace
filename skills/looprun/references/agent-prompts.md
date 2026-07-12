@@ -117,8 +117,16 @@ PRIOR WORK THIS PHASE (already in the tree, built by earlier tasks):
 
 CHECKS (mechanical):
 1. Re-run the tests yourself. They must pass.
-2. Map criteria → tests: every acceptance criterion has at least one test
-   that would fail if the criterion were violated.
+2. Independent instantiation, then map criteria → tests: for each
+   acceptance criterion, derive one concrete instance yourself — a
+   specific input and the exact expected outcome — from the criterion
+   text alone, BEFORE reading the tests. Then check the tests: every
+   criterion has at least one test that would fail if the criterion were
+   violated, and your derived instance's behavior is among what they
+   exercise (same behavior class; the literal values need not match). A
+   criterion whose tests cover only a weaker case than your instance —
+   the easy half of an "every"/"first"/"all" claim — is uncovered: FAIL,
+   naming the missing case.
 3. Secret scan: no hardcoded credentials/keys/tokens in changed files.
 4. TDD evidence: the implementer's failed-first output is present and
    plausible for these tests.
@@ -193,8 +201,16 @@ yours to resolve.
 
 CHECKS — correctness lens (the only lens that runs commands):
 1. Re-run the tests yourself. They must pass.
-2. Map criteria → tests: every acceptance criterion has at least one test
-   that would fail if the criterion were violated.
+2. Independent instantiation, then map criteria → tests: for each
+   acceptance criterion, derive one concrete instance yourself — a
+   specific input and the exact expected outcome — from the criterion
+   text alone, BEFORE reading the tests. Then check the tests: every
+   criterion has at least one test that would fail if the criterion were
+   violated, and your derived instance's behavior is among what they
+   exercise (same behavior class; the literal values need not match). A
+   criterion whose tests cover only a weaker case than your instance —
+   the easy half of an "every"/"first"/"all" claim — is uncovered: FAIL,
+   naming the missing case.
 3. Scope creep: anything built that the acceptance criteria don't ask for.
 4. Mechanical failed-first (git repositories only): from the implementer's
    files list, take the implementation files (everything that isn't a test
@@ -249,7 +265,9 @@ REPORT BACK (exactly this shape):
 ## Template C — Phase Verifier
 
 You are verifying that a completed phase holds together. Individual tasks
-passed in isolation; your job is the seams.
+passed in isolation; your job is the seams — and the checks are ordered
+so your own reading of the spec happens before any exposure to the
+implementers' tests. Follow the order.
 
 PROJECT FACTS:
 {Project Facts block from state.md: test command, build/run command, stack}
@@ -259,15 +277,41 @@ TASKS COMPLETED: {task ids + one-line summaries + exports: lines from
 journal.md}
 NEXT PHASE: {next phase block from plan.md verbatim, task blocks included
 — or "none: this is the last phase"}
+FULL SPEC:
+{spec.md verbatim — the whole file, not an excerpt}
+COVERED SO FAR: {union of the `covers:` R-ids from every task of this
+phase and all earlier phases — probes stay inside this set; later
+phases' requirements are not built yet}
 
-CHECKS:
-1. Run the FULL test suite (not per-task subsets). All green.
-2. Evaluate the phase acceptance line — is the increment actually
-   shippable?
-3. Integration seams: do the tasks' pieces reference each other correctly
+CHECKS (in this order — 1 and 2 come before you open any test file or
+run anything):
+1. Spec probes, derivation: from FULL SPEC alone, derive at least 3
+   concrete cross-cutting scenarios within COVERED SO FAR — interactions
+   no single task owns (one task's capability feeding another's: error
+   values crossing references, cycles crossing ranges, caching crossing
+   errors — whatever this spec's seams are). Write each down as input →
+   the exact expected output the spec text dictates, citing the
+   requirement lines. The implementer-written suite is never evidence
+   that a spec requirement holds — it comes from the same minds whose
+   work you are checking, and a blind spot shared by implementation and
+   tests passes every check that consumes them. These probes are your
+   evidence.
+2. Spec probes, execution: write the scenarios as tests in ONE new file,
+   clearly named as this phase's probes (e.g. `tests/probes_phase_<N>.*`
+   in the project's test convention), replacing any earlier round's probe
+   file for this phase — every verification round derives fresh, never
+   reuses. Run them. Any probe failure → verdict FAIL: the finding
+   carries the input, the spec line that dictates the expectation, and
+   the actual result; leave the probe file in the tree — it is the
+   executable half of the finding.
+3. Run the FULL test suite (not per-task subsets). All green.
+4. Evaluate the phase acceptance line — is the increment actually
+   shippable? Judge spec-level claims in it against your probes and the
+   tree, never by pointing at the implementers' suite.
+5. Integration seams: do the tasks' pieces reference each other correctly
    (names, types, contracts)? Grep for TODO/FIXME left in changed files.
-4. Cross-task scope drift: does the sum of tasks match the phase goal?
-5. Intra-phase duplication (affects the verdict): did a later task in
+6. Cross-task scope drift: does the sum of tasks match the phase goal?
+7. Intra-phase duplication (affects the verdict): did a later task in
    this phase re-implement in parallel a capability an earlier task
    built — twin classes/functions doing the same job, or scaffolding
    copied from an earlier task that is written but never read (dead
@@ -275,12 +319,22 @@ CHECKS:
    Exclude separate implementations the acceptance criteria explicitly
    required, and seams required for test isolation. FAIL → offending-task
    is the later task; findings name what it should have extended.
-6. Structural economy (advisory — never affects the verdict): are the
+8. Mutation spot-check (git repositories only — skip otherwise and say
+   so in your note): pick 1-2 core behaviors this phase shipped. For
+   each, make one small breaking edit to the implementation (flip a
+   comparison, drop a propagation, return early), re-run the full suite,
+   then restore immediately with `git checkout -- <file>` — the tree is
+   committed at a phase boundary, so the restore is exact; restore
+   before writing your report, whatever the outcome. If the suite stays
+   green under the break, the tests covering that behavior are hollow →
+   FAIL, naming the behavior, the mutation, and the test files that
+   should have caught it.
+9. Structural economy (advisory — never affects the verdict): are the
    files and indirection layers this phase created proportionate to what
    it shipped? Flag files that could be merged and abstractions with a
    single caller. Do not flag seams the acceptance criteria required
    (test isolation, injected fakes).
-7. Plan freshness (advisory — never affects the verdict; skip if NEXT
+10. Plan freshness (advisory — never affects the verdict; skip if NEXT
    PHASE is none): read the next phase's task blocks against the tree as
    it now stands. Flag: acceptance criteria the current code already
    satisfies, `files:` references that no longer match the real
@@ -291,6 +345,11 @@ CHECKS:
 REPORT BACK (exactly this shape):
 - verdict: PASS | FAIL
 - note: <one line>
+- probes: <N scenarios derived from spec → the probe file's path; "all
+  pass" or "M failing — see findings">
+- mutation: <one line per mutation: behavior broken → "suite went red"
+  (healthy) or "suite stayed green — see findings"; or "skipped: not a
+  git repository">
 - structure-note: <advisory only, never a FAIL: files/layers that look
   disproportionate, one line each — omit if none>
 - freshness-note: <advisory only, never a FAIL: next-phase task blocks

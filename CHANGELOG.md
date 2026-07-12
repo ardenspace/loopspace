@@ -1,5 +1,52 @@
 # Changelog
 
+## 0.15.0 — 2026-07-13
+
+**Independent instruments — spec probes, mutation spot-check, and
+verifier-derived instances.**
+
+Why: the gridcalc dogfood run (experiment W, solo-vs-loopspace A/B)
+exposed the loop's one structural blind spot: an error shared by
+implementation and tests passes every check that consumes them. Task
+3.1's acceptance carried the exact semantics the shipped bug violated
+("first error in visit order wins"), but the implementer instantiated it
+with only the one case where the bug is invisible, and the criteria→tests
+mapping accepted that as coverage. Task 4.4's acceptance ordered a
+differential suite against an independent naive reference — the
+implementer shipped a hollow suite with no reference at all, the task
+verifier passed it, and the phase verifier then cited "verified by
+existing test suite" for a comparison that existed nowhere. A held-out
+oracle caught the bug for one reason: its test cases were derived from
+the spec by a different mind. This release moves that property into the
+loop.
+
+- **Spec probes (template C, blocking).** The phase verifier now receives
+  the full spec.md plus the union of covered R-ids, and — before opening
+  any existing test — derives at least 3 cross-cutting scenarios no
+  single task owns, writes them as a fresh probe file, and runs them. The
+  implementer-written suite is never accepted as evidence for a
+  spec-level claim. A failing probe is a findings line *and* an
+  executable test left in the tree for the re-opened task; probes ride
+  the boundary commit as a regression floor, and every round derives
+  fresh ones rather than reusing them as evidence.
+- **Mutation spot-check (template C, blocking, git projects).** Break 1-2
+  core behaviors the phase shipped, re-run the suite, restore exactly
+  (the boundary tree is committed). A suite that stays green under the
+  break is hollow → FAIL naming the tests that should have caught it.
+  Adopted now because the 0.5.0 evidence gate fired: a real run journal
+  showed the verifier-PASS-but-criterion-violated pattern, twice.
+- **Independent instantiation (template B check 2 / template D
+  correctness check 2).** Before reading the tests, the task verifier
+  derives one concrete instance per acceptance criterion (input → exact
+  expected outcome) and requires the tests to exercise it; tests covering
+  only a weaker case than the derived instance are a FAIL naming the
+  missing case. Kills weakest-case instantiation at the task layer.
+- **Compatibility.** No state-format migration: the phase journal entry
+  gains `probes:`/`mutation:` lines going forward. Non-git projects skip
+  the mutation check; tiers B/C degrade as before (sequential/role-swap),
+  with the probe-before-tests ordering kept as an instruction even where
+  session isolation is weaker.
+
 ## 0.14.0 — 2026-07-11
 
 **Intra-phase carry — prior-task outputs reach every dispatch.**

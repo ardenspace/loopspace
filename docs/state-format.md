@@ -238,6 +238,8 @@ version: 1
 ## [re-plan 2.3] <one line: what was split/reordered and why>
 
 ## [phase 1] verified — <one-line integration note>
+- probes: <N scenarios derived from spec → tests/probes_phase_1.*; all pass>
+- mutation: <behavior broken → suite went red | skipped: not a git repository>
 - structure-note: <verbatim, advisory — phase-level structural-economy
   observation consumed by loopnext>
 
