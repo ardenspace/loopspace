@@ -98,8 +98,11 @@ restart at a stable point — task cycle done or handoff written.)
   level first and again at the phase boundary.
 - **Independent verification.** Fresh subagents that never wrote the code check the work
   and trust nothing in the implementer's report. Light tasks get one verifier running the
-  mechanical baseline: re-run the tests, map every acceptance criterion to a test that
-  would fail if it were violated, scan changed files for hardcoded secrets, and check
+  mechanical baseline: re-run the tests, derive a concrete instance of each acceptance
+  criterion *before reading the tests* and require the tests to exercise it (a criterion
+  tested only at its easiest case is uncovered — the implementer who wrote the bug also
+  wrote the tests, and a shared blind spot passes any check that consumes them), scan
+  changed files for hardcoded secrets, and check
   that the implementer's failed-first TDD evidence is present and plausible. Heavy tasks
   get a **three-lens panel** — correctness (tests, criteria mapping, scope creep, and a
   mechanical failed-first proof: stash the implementation files, watch the task's tests
@@ -120,10 +123,18 @@ restart at a stable point — task cycle done or handoff written.)
   implement until they pass. The journal entry for a task must show the failing-first
   evidence — a task without it hasn't actually proven anything.
 - **Phase boundaries verify in both directions.** When a phase's last task lands, a
-  fresh phase verifier runs the full suite and checks the seams between tasks — pieces
+  fresh phase verifier gets the *full spec* and — before looking at a single existing
+  test — derives its own cross-cutting scenarios (the interactions no one task owns:
+  error values crossing references, caching crossing errors), writes them as a probe
+  file, and runs them. The implementer-written suite is never accepted as evidence that
+  a spec requirement holds; passing probes ride the boundary commit as a regression
+  floor, and every boundary derives fresh ones. Then it runs the full suite and checks
+  the seams between tasks — pieces
   that passed in isolation still have to hold together. Intra-phase duplication — a
   later task re-implementing what an earlier task built instead of extending it — fails
-  the phase and re-opens the later task. It also emits two advisories
+  the phase and re-opens the later task. A mutation spot-check closes the loop on the
+  tests themselves: break a core behavior, watch the suite go red, restore — a suite
+  that stays green under the break is hollow and fails the phase. It also emits two advisories
   that never flip the verdict: structural economy (are the files and indirection layers
   this phase created proportionate to what it shipped?) and plan freshness (do the
   *next* phase's task blocks still match reality — criteria the current code already
