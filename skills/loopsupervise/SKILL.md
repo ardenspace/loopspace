@@ -64,3 +64,7 @@ harness profile (`../../harnesses/`).
 - No progress across restarts (default 2) → notify "stuck," exit.
 - Absolute restart ceiling (`LOOPSPACE_MAX_RESTARTS`, default 50) → notify and
   exit before launching again, even if every restart shows progress.
+- Live hang — the process stays alive but state.md/journal.md stop changing
+  (`LOOPSPACE_STALL_TIMEOUT`, default 3600s, 0 disables) → kill the session
+  process tree and fall through to the normal restart path; repeated stalls
+  escalate to "stuck" via the no-progress counter.

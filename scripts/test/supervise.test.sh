@@ -149,6 +149,41 @@ d="$(make_project executing)"
 out="$(LOOPSPACE_MAX_RESTARTS=abc LOOPSPACE_RESUME_CMD="true" sh "$SCRIPT" "$d" 2>&1)"; rc=$?
 [ "$rc" -eq 1 ] && echo "$out" | grep -qi "integer" && ok || fail "max-restarts-nonnumeric (rc=$rc, out=$out)"
 
+# ---- executing: session hangs alive without progress => stall kill, then STUCK ----
+d="$(make_project executing)"
+mock="$(mktemp)"
+cat > "$mock" <<MOCK
+#!/bin/sh
+# mock resume that hangs: counts the call, then sleeps far past the test's
+# stall timeout without ever touching state/journal. The supervisor must
+# kill it (and this sleep) instead of waiting forever.
+c="$d/.loopspace/count"
+n=\$(cat "\$c" 2>/dev/null || echo 0); echo "\$((n+1))" > "\$c"
+sleep 300
+MOCK
+chmod +x "$mock"
+out="$(LOOPSPACE_STALL_TIMEOUT=2 LOOPSPACE_MAX_NOPROGRESS=2 LOOPSPACE_RESUME_CMD="sh $mock" sh "$SCRIPT" "$d" 2>&1)"; rc=$?
+calls="$(cat "$d/.loopspace/count" 2>/dev/null || echo 0)"
+[ "$rc" -eq 1 ] && [ "$calls" -eq 2 ] \
+  && echo "$out" | grep -qi "stalled" && echo "$out" | grep -qi "stuck" \
+  && ok || fail "stall-kill (rc=$rc, calls=$calls, out=$out)"
+
+# ---- non-numeric STALL_TIMEOUT => fail fast ----
+d="$(make_project executing)"
+out="$(LOOPSPACE_STALL_TIMEOUT=abc LOOPSPACE_RESUME_CMD="true" sh "$SCRIPT" "$d" 2>&1)"; rc=$?
+[ "$rc" -eq 1 ] && echo "$out" | grep -qi "integer" && ok || fail "stall-timeout-nonnumeric (rc=$rc, out=$out)"
+
+# ---- STALL_TIMEOUT=0 disables the watcher; foreground path still completes ----
+d="$(make_project executing)"
+mock="$(mktemp)"
+cat > "$mock" <<MOCK
+#!/bin/sh
+sed -i.bak 's/^run_status: .*/run_status: complete/' "$d/.loopspace/state.md"
+MOCK
+chmod +x "$mock"
+out="$(LOOPSPACE_STALL_TIMEOUT=0 LOOPSPACE_RESUME_CMD="sh $mock" sh "$SCRIPT" "$d" 2>&1)"; rc=$?
+[ "$rc" -eq 0 ] && echo "$out" | grep -qi "complete" && ok || fail "stall-timeout-disabled (rc=$rc, out=$out)"
+
 echo "----"
 echo "PASS=$PASS FAIL=$FAIL"
 [ "$FAIL" -eq 0 ]

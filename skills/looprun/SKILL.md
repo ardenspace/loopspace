@@ -61,6 +61,15 @@ below. `run_status: complete` → say so, stop. All file formats:
 
 ```
 next task = first non-done task in plan order
+0. Boundary debt (self-healing, like branch discipline): if any phase
+   before the next task's phase has all its tasks done in state.md but
+   no `[phase N] verified` entry in journal.md, that boundary never ran
+   — a session ended in the window between the phase's last task and
+   its verifier, and "when the last task is done" fired in a session
+   that no longer exists. Run the Phase Boundary for the oldest such
+   phase now, before dispatching anything. The obligation is re-derived
+   from disk on every cycle entry, so it survives crashes and early
+   turn-ends.
 1. Dispatch IMPLEMENTER (fresh) — prompt template A in references/agent-prompts.md
    - carries: Project Facts, spec excerpt (only the R-ids this task
      covers), the task block from plan.md, current handoff.md notes,

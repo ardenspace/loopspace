@@ -1,5 +1,34 @@
 # Changelog
 
+## 0.15.1 — 2026-07-13
+
+**Enforcement moves from prompts to mechanism — boundary debt and stall
+kill.**
+
+Why: the 0.15.0 validation rerun (gridcalc, ornith/opencode) showed the
+new instruments work where invoked and get skipped where they matter.
+Two invocation holes were exposed, both mechanical: (1) a session ended
+right after a phase's last task, and the resumed session picked the next
+phase's first task — the phase-boundary obligation lived only in the
+dead session's control flow, so probes never ran for the phase where the
+shipped bugs lived; (2) a session hung alive for 6.5 hours making LLM
+calls without touching a file — the supervisor checks progress only when
+the process exits, so a live hang is invisible until a human kills it.
+
+- **Boundary debt (looprun per-task cycle, step 0).** Before dispatching
+  any task, re-derive the boundary obligation from disk: a phase with all
+  tasks done in state.md but no `[phase N] verified` journal entry gets
+  its Phase Boundary run first, oldest phase first. Same self-healing
+  philosophy as branch discipline — crash-safe because it is re-checked
+  on every cycle entry, never remembered.
+- **Stall kill (supervise.sh, `LOOPSPACE_STALL_TIMEOUT`, default 3600s,
+  0 disables).** The resume command now runs backgrounded with a watcher:
+  if state.md/journal.md stay unchanged for the timeout while the process
+  is still alive, the process tree is killed and the normal restart path
+  takes over (repeated stalls escalate to STUCK via the existing
+  no-progress counter). Generous default: a false kill costs one restart,
+  which crash recovery absorbs; a missed hang costs hours.
+
 ## 0.15.0 — 2026-07-13
 
 **Independent instruments — spec probes, mutation spot-check, and
