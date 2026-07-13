@@ -184,6 +184,65 @@ chmod +x "$mock"
 out="$(LOOPSPACE_STALL_TIMEOUT=0 LOOPSPACE_RESUME_CMD="sh $mock" sh "$SCRIPT" "$d" 2>&1)"; rc=$?
 [ "$rc" -eq 0 ] && echo "$out" | grep -qi "complete" && ok || fail "stall-timeout-disabled (rc=$rc, out=$out)"
 
+# ---- executing: every session exit is logged with rc and duration ----
+d="$(make_project executing)"
+mock="$(mktemp)"
+cat > "$mock" <<MOCK
+#!/bin/sh
+sed -i.bak 's/^run_status: .*/run_status: complete/' "$d/.loopspace/state.md"
+MOCK
+chmod +x "$mock"
+out="$(LOOPSPACE_RESUME_CMD="sh $mock" sh "$SCRIPT" "$d" 2>&1)"; rc=$?
+[ "$rc" -eq 0 ] && echo "$out" | grep -q "session exited rc=0" \
+  && ok || fail "exit-sign-log (rc=$rc, out=$out)"
+
+# ---- executing: consecutive fast error exits => FAILING FAST stop ----
+d="$(make_project executing)"
+mock="$(mktemp)"
+cat > "$mock" <<MOCK
+#!/bin/sh
+# mock resume: makes progress each call (so no-progress never trips) but
+# dies immediately with an error, like a dead LLM backend.
+c="$d/.loopspace/count"
+n=\$(cat "\$c" 2>/dev/null || echo 0); n=\$((n+1)); echo "\$n" > "\$c"
+echo "## [1.\$n] attempt 1 — note" >> "$d/.loopspace/journal.md"
+exit 7
+MOCK
+chmod +x "$mock"
+out="$(LOOPSPACE_MAX_FASTFAIL=3 LOOPSPACE_RESUME_CMD="sh $mock" sh "$SCRIPT" "$d" 2>&1)"; rc=$?
+calls="$(cat "$d/.loopspace/count" 2>/dev/null || echo 0)"
+[ "$rc" -eq 1 ] && [ "$calls" -eq 3 ] && echo "$out" | grep -qi "failing fast" \
+  && ok || fail "fastfail-stop (rc=$rc, calls=$calls, out=$out)"
+
+# ---- fastfail counter resets after a healthy session ----
+d="$(make_project executing)"
+mock="$(mktemp)"
+cat > "$mock" <<MOCK
+#!/bin/sh
+# error-exit on calls 1,2; healthy (rc=0) on 3; error on 4,5; complete on 6.
+# With MAX_FASTFAIL=3 the run must survive to call 6 — the healthy session
+# resets the consecutive-failure counter.
+c="$d/.loopspace/count"
+n=\$(cat "\$c" 2>/dev/null || echo 0); n=\$((n+1)); echo "\$n" > "\$c"
+echo "## [1.\$n] attempt 1 — note" >> "$d/.loopspace/journal.md"
+if [ "\$n" -eq 3 ]; then exit 0; fi
+if [ "\$n" -ge 6 ]; then
+  sed -i.bak 's/^run_status: .*/run_status: complete/' "$d/.loopspace/state.md"
+  exit 0
+fi
+exit 7
+MOCK
+chmod +x "$mock"
+out="$(LOOPSPACE_MAX_FASTFAIL=3 LOOPSPACE_RESUME_CMD="sh $mock" sh "$SCRIPT" "$d" 2>&1)"; rc=$?
+calls="$(cat "$d/.loopspace/count" 2>/dev/null || echo 0)"
+[ "$rc" -eq 0 ] && [ "$calls" -eq 6 ] && echo "$out" | grep -qi "complete" \
+  && ok || fail "fastfail-reset (rc=$rc, calls=$calls, out=$out)"
+
+# ---- non-numeric MAX_FASTFAIL => fail fast ----
+d="$(make_project executing)"
+out="$(LOOPSPACE_MAX_FASTFAIL=abc LOOPSPACE_RESUME_CMD="true" sh "$SCRIPT" "$d" 2>&1)"; rc=$?
+[ "$rc" -eq 1 ] && echo "$out" | grep -qi "integer" && ok || fail "max-fastfail-nonnumeric (rc=$rc, out=$out)"
+
 echo "----"
 echo "PASS=$PASS FAIL=$FAIL"
 [ "$FAIL" -eq 0 ]

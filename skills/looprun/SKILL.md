@@ -228,7 +228,7 @@ When the last task of a phase is done:
    lines, and its `structure-note`, `freshness-note`, and `spec-concern`
    lines verbatim, if any); overwrite
    `handoff.md`
-   (trigger: `phase-boundary`), carrying forward every previous-handoff
+   (trigger: `phase-boundary`, `position:` = the phase's last task id), carrying forward every previous-handoff
    item that is still true — phase 1's flaky-test warning must survive
    into phase 3 — and copying any `freshness-note` lines into "Watch out
    for", so the flagged tasks' own implementers see the suspicion. A
@@ -276,7 +276,8 @@ luck past it. Self-estimates are unreliable, so use a hard proxy too:
 whichever comes first:
 
 1. Finish the in-flight task cycle (never abandon a dispatched verifier).
-2. Overwrite `handoff.md` (trigger: `context-threshold`) with everything
+2. Overwrite `handoff.md` (trigger: `context-threshold`, `position:` =
+   the task id that cycle just finished) with everything
    the next session needs.
 3. Update `state.md`, then end the turn telling the user exactly the
    harness profile's reset-and-resume commands (Claude Code: `/clear`,

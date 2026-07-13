@@ -20,7 +20,10 @@ only `.loopspace/` can continue exactly. This skill is that read path.
 3. `.loopspace/spec.md` — Goals, Non-Goals, and the R-ids covered by the
    current phase only
 4. `.loopspace/handoff.md` — the previous session's notes (may not exist
-   on a crash; say so if missing)
+   on a crash; say so if missing. May also be *stale*: a session that
+   died before its handoff step — crash, backend timeout — leaves the
+   previous boundary's handoff behind. Step 2 checks this; don't act on
+   its contents before that check.)
 5. `.loopspace/journal.md` — **tail only**: entries for the current task
    and current phase. Never read the whole journal.
 
@@ -48,6 +51,17 @@ only `.loopspace/` can continue exactly. This skill is that read path.
 - No task is `in_progress` with a journal PASS entry (a crash between
   verifier PASS and state update — if found, mark it done, journal the
   correction, continue).
+- **handoff.md freshness.** If handoff.md has a `position:` field, check
+  the journal for verifier-PASS or `[phase N] verified` entries for any
+  task *after* that position (plan.md order). Found any → the handoff is
+  **stale**: the session(s) after it died before writing their own.
+  Announce it ("handoff.md is stale — written at <position>, run is now
+  at <current>"), take position exclusively from state.md + the journal
+  tail, and ignore the stale handoff's "Where we are" / "Next session
+  must know" position claims. Its "Watch out for" items may still be
+  true — read them as historical warnings, nothing more. No `position:`
+  field (pre-0.15.2 handoff) → freshness is unknown: prefer state.md +
+  journal over the handoff wherever they disagree.
 - Corrupted/contradictory state you cannot mechanically reconcile → report
   precisely what disagrees and stop. Never guess a position.
 

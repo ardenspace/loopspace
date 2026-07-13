@@ -1,7 +1,7 @@
 {
   "name": "loopspace",
   "description": "Spec-driven autonomous harness: rigorously verified specs and plans, then an autonomous implement-verify loop with TDD, fresh agents per task, and disk-based resumable state. Keep context light, verify heavy.",
-  "version": "0.15.1",
+  "version": "0.15.2",
   "author": {
     "name": "ardenspace",
     "email": "ardensdevspace@gmail.com"

@@ -258,6 +258,14 @@ entry scopes it.
 version: 1
 written: <YYYY-MM-DD>
 trigger: phase-boundary     # phase-boundary | context-threshold
+position: <task id>         # last task whose cycle finished when this was
+                            # written — the staleness anchor. A session can
+                            # die (crash, backend timeout) without reaching
+                            # its handoff step; the file left behind then
+                            # describes an older position. loopresume
+                            # compares this field against the journal: any
+                            # verified progress past it means the handoff is
+                            # stale and must not be trusted for position.
 
 ## Where we are
 <current phase/task, one paragraph max>
