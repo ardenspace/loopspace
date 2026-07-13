@@ -13,6 +13,15 @@
 #   LOOPSPACE_MAX_NOPROGRESS  restarts with no progress before giving up (default 2)
 #   LOOPSPACE_MAX_RESTARTS  absolute ceiling on resume launches per invocation,
 #                           regardless of progress (default 50)
+#   LOOPSPACE_STALL_TIMEOUT seconds of unchanged state.md/journal.md while the
+#                           resume process is still alive before it is killed
+#                           for a fresh restart (default 3600; 0 disables).
+#                           Catches sessions that hang without dying — a live
+#                           process never reaches the exit-time progress check.
+#                           A long-running implementer attempt can legitimately
+#                           go quiet for a while, so keep this generous: a
+#                           false kill costs one restart (crash recovery
+#                           absorbs it); a missed hang costs hours.
 #
 # Notes:
 #   - The Telegram bot token appears in curl's argv, so it is visible in `ps`
@@ -29,6 +38,7 @@ trap 'echo "supervise: interrupted" >&2; exit 130' INT TERM
 PROJECT="${1:-.}"
 MAX_NOPROGRESS="${LOOPSPACE_MAX_NOPROGRESS:-2}"
 MAX_RESTARTS="${LOOPSPACE_MAX_RESTARTS:-50}"
+STALL_TIMEOUT="${LOOPSPACE_STALL_TIMEOUT:-3600}"
 RESUME_CMD="${LOOPSPACE_RESUME_CMD:-claude -p '/loopresume' --dangerously-skip-permissions}"
 
 case "$MAX_NOPROGRESS" in
@@ -46,6 +56,12 @@ case "$MAX_RESTARTS" in
     exit 1 ;;
   0)
     echo "supervise: LOOPSPACE_MAX_RESTARTS must be >= 1 (got 0)" >&2
+    exit 1 ;;
+esac
+
+case "$STALL_TIMEOUT" in
+  ''|*[!0-9]*)
+    echo "supervise: LOOPSPACE_STALL_TIMEOUT must be a non-negative integer of seconds (got '$STALL_TIMEOUT')" >&2
     exit 1 ;;
 esac
 
@@ -72,6 +88,14 @@ progress_sig() {
   { cat "$STATE" 2>/dev/null
     wc -l 2>/dev/null < .loopspace/journal.md
   } | cksum
+}
+
+kill_tree() {
+  # kill a process and all its descendants (the RESUME_CMD subshell plus
+  # whatever harness process it spawned); POSIX sh has no process groups
+  # here, so walk the tree via pgrep -P (macOS and Linux both have it)
+  for _kt_child in $(pgrep -P "$1" 2>/dev/null); do kill_tree "$_kt_child"; done
+  kill -9 "$1" 2>/dev/null
 }
 
 prev_sig=""
@@ -111,7 +135,31 @@ while :; do
       fi
       restarts=$((restarts + 1))
       # eval so quoted args in RESUME_CMD parse correctly; SC2086 intentional
-      eval "$RESUME_CMD"
+      if [ "$STALL_TIMEOUT" -gt 0 ]; then
+        # run the session in the background and watch for a live hang: a
+        # process that keeps running while state.md/journal.md never change
+        # (the exit-time progress check below can never see it)
+        eval "$RESUME_CMD" &
+        session_pid=$!
+        stall_sig="$(progress_sig)"
+        stall_since="$(date +%s)"
+        while kill -0 "$session_pid" 2>/dev/null; do
+          sleep 2
+          s="$(progress_sig)"
+          if [ "$s" != "$stall_sig" ]; then
+            stall_sig="$s"
+            stall_since="$(date +%s)"
+          fi
+          if [ $(( $(date +%s) - stall_since )) -ge "$STALL_TIMEOUT" ]; then
+            notify "session stalled — no state/journal change for ${STALL_TIMEOUT}s with the process still alive; killing it for a fresh restart ($PROJECT)"
+            kill_tree "$session_pid"
+            break
+          fi
+        done
+        wait "$session_pid" 2>/dev/null
+      else
+        eval "$RESUME_CMD"
+      fi
       ;;
     spec|planning)
       notify "run_status='$status' — not an executing run, exiting ($PROJECT)"
