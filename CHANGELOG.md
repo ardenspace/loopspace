@@ -1,5 +1,43 @@
 # Changelog
 
+## 0.15.2 — 2026-07-13
+
+**Stale-handoff detection and fast-fail on a dead backend.**
+
+Why: session-store forensics on the 0.15.0 validation rerun corrected
+the record — the phase-3 boundary was not skipped out of non-compliance.
+The orchestrator recognized the boundary and dispatched the phase
+verifier; the verifier died mid-work on a 300s LLM-request timeout
+(local llama-server at its largest-context moment), and the
+orchestrator's next call timed out the same way. The turn ended as an
+error with no journal entry, no boundary commit, and no handoff — so
+the handoff.md left on disk was the *previous* boundary's, and every
+later session read it as current. Two new holes, both mechanical:
+a handoff can be stale without looking stale, and a dying backend kills
+sessions faster than the no-progress counter can notice (error-exit
+sessions still touch the journal, so "no progress" never trips).
+
+- **`position:` field in handoff.md** (state-format.md, both looprun
+  write sites): the last task id whose cycle finished when the handoff
+  was written — a machine-checkable staleness anchor.
+- **Freshness check in loopresume (step 2).** Journal shows verified
+  progress past the handoff's `position:` → the handoff is stale:
+  announce it, position comes exclusively from state.md + journal tail,
+  stale "Where we are"/"Next session must know" position claims are
+  ignored, "Watch out for" items degrade to historical warnings.
+  Handoffs without the field (pre-0.15.2): freshness unknown — state.md
+  and journal win wherever they disagree.
+- **Fast-fail stop (supervise.sh, `LOOPSPACE_MAX_FASTFAIL`, default 3,
+  0 disables; `LOOPSPACE_FASTFAIL_SECS`, default 60).** N consecutive
+  sessions exiting nonzero in under the window stop the supervisor with
+  a loud notify instead of burning `LOOPSPACE_MAX_RESTARTS` against a
+  backend that answers nothing. Healthy or long sessions reset the
+  counter; stall kills don't count. Every session exit is now logged
+  with rc and duration, so death causes are visible in the runner log.
+- **opencode profile: Local Backend Timeouts section** — raise the
+  provider request timeout past worst-case prompt processing, keep
+  phase-verifier prompts lean, run the supervisor with fast-fail on.
+
 ## 0.15.1 — 2026-07-13
 
 **Enforcement moves from prompts to mechanism — boundary debt and stall

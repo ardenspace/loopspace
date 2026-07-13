@@ -22,6 +22,16 @@
 #                           go quiet for a while, so keep this generous: a
 #                           false kill costs one restart (crash recovery
 #                           absorbs it); a missed hang costs hours.
+#   LOOPSPACE_MAX_FASTFAIL  consecutive sessions that exit nonzero within
+#                           LOOPSPACE_FASTFAIL_SECS before the supervisor stops
+#                           (default 3; 0 disables). Catches a dead/overloaded
+#                           LLM backend: such sessions can still touch the
+#                           journal, so the no-progress check never trips, and
+#                           blind restarts would burn LOOPSPACE_MAX_RESTARTS
+#                           against a backend that answers nothing. A healthy
+#                           session (rc=0, or one that ran long) resets the
+#                           counter; stall kills are not counted.
+#   LOOPSPACE_FASTFAIL_SECS what counts as a fast exit, in seconds (default 60)
 #
 # Notes:
 #   - The Telegram bot token appears in curl's argv, so it is visible in `ps`
@@ -39,6 +49,8 @@ PROJECT="${1:-.}"
 MAX_NOPROGRESS="${LOOPSPACE_MAX_NOPROGRESS:-2}"
 MAX_RESTARTS="${LOOPSPACE_MAX_RESTARTS:-50}"
 STALL_TIMEOUT="${LOOPSPACE_STALL_TIMEOUT:-3600}"
+MAX_FASTFAIL="${LOOPSPACE_MAX_FASTFAIL:-3}"
+FASTFAIL_SECS="${LOOPSPACE_FASTFAIL_SECS:-60}"
 RESUME_CMD="${LOOPSPACE_RESUME_CMD:-claude -p '/loopresume' --dangerously-skip-permissions}"
 
 case "$MAX_NOPROGRESS" in
@@ -62,6 +74,18 @@ esac
 case "$STALL_TIMEOUT" in
   ''|*[!0-9]*)
     echo "supervise: LOOPSPACE_STALL_TIMEOUT must be a non-negative integer of seconds (got '$STALL_TIMEOUT')" >&2
+    exit 1 ;;
+esac
+
+case "$MAX_FASTFAIL" in
+  ''|*[!0-9]*)
+    echo "supervise: LOOPSPACE_MAX_FASTFAIL must be a non-negative integer (got '$MAX_FASTFAIL')" >&2
+    exit 1 ;;
+esac
+
+case "$FASTFAIL_SECS" in
+  ''|*[!0-9]*)
+    echo "supervise: LOOPSPACE_FASTFAIL_SECS must be a non-negative integer of seconds (got '$FASTFAIL_SECS')" >&2
     exit 1 ;;
 esac
 
@@ -102,6 +126,7 @@ prev_sig=""
 noprogress=0
 restarts=0
 torn=0
+fastfail=0
 
 while :; do
   if [ ! -f "$STATE" ]; then
@@ -134,6 +159,8 @@ while :; do
         exit 1
       fi
       restarts=$((restarts + 1))
+      session_start="$(date +%s)"
+      stall_killed=0
       # eval so quoted args in RESUME_CMD parse correctly; SC2086 intentional
       if [ "$STALL_TIMEOUT" -gt 0 ]; then
         # run the session in the background and watch for a live hang: a
@@ -153,12 +180,27 @@ while :; do
           if [ $(( $(date +%s) - stall_since )) -ge "$STALL_TIMEOUT" ]; then
             notify "session stalled — no state/journal change for ${STALL_TIMEOUT}s with the process still alive; killing it for a fresh restart ($PROJECT)"
             kill_tree "$session_pid"
+            stall_killed=1
             break
           fi
         done
         wait "$session_pid" 2>/dev/null
+        session_rc=$?
       else
         eval "$RESUME_CMD"
+        session_rc=$?
+      fi
+      session_dur=$(( $(date +%s) - session_start ))
+      echo "supervise: session exited rc=$session_rc after ${session_dur}s (restart $restarts/$MAX_RESTARTS)"
+      if [ "$MAX_FASTFAIL" -gt 0 ] && [ "$stall_killed" -eq 0 ] \
+         && [ "$session_rc" -ne 0 ] && [ "$session_dur" -lt "$FASTFAIL_SECS" ]; then
+        fastfail=$((fastfail + 1))
+        if [ "$fastfail" -ge "$MAX_FASTFAIL" ]; then
+          notify "run FAILING FAST — $fastfail consecutive error exits in under ${FASTFAIL_SECS}s each; LLM backend or harness likely down ($PROJECT)"
+          exit 1
+        fi
+      else
+        fastfail=0
       fi
       ;;
     spec|planning)
