@@ -136,6 +136,13 @@ harness: claude-code        # harness profile id (harnesses/ in the loopspace
                             # checkout); absent = claude-code (pre-0.13 run)
 tier: A                     # A | B | C — dispatch capability from the
                             # profile; absent = A
+implementer_fallback: openai/gpt-5.5
+                            # optional — a model/route the harness profile
+                            # can dispatch one task's implementers to;
+                            # arms the escalation ladder in looprun's
+                            # stall policy. Absent = no ladder, a stall
+                            # halts as before. Set by the human (any time
+                            # before or during a run); never set by a skill.
 ```
 
 Added at spec approval (git projects only) — the three branch fields:
@@ -209,6 +216,9 @@ version: 1
 - exports: <public symbols the task added or changed for use outside it,
   module-qualified — or "none". looprun assembles the next dispatches'
   PRIOR WORK THIS PHASE block from these lines>
+- pre-existing: <optional — verbatim from the implementer: the behavior
+  already existed (an earlier task built past its boundary) and the red
+  evidence came from the temporary-removal route>
 - spec-concern: <optional, advisory — verbatim from the verifier: R-id or
   criterion that is correctly implemented but questionable as spec design;
   surfaces to the human in the halt or run-complete report>
@@ -229,11 +239,18 @@ version: 1
 
 ## [stall 2.3] cause: stubborn — evidence: "<verbatim finding line that justified the classification>"
 
+## [2.3] narrow resume — findings converging (5→3→2)  <!-- relief gate 1:
+                                     once per task; this entry is the guard -->
+
 ## [2.3] burst candidate 1 — FAIL  <!-- diversity burst after 3 stalled attempts -->
 - approach: <one line — must differ from every failed approach>
 - verifier: FAIL — <finding>
 
 ## [2.3] burst candidate 2 — PASS
+
+## [2.3] escalated implementer → openai/gpt-5.5  <!-- relief gate 3: once per
+                                     task, needs implementer_fallback: in
+                                     state.md; this entry is the guard -->
 
 ## [re-plan 2.3] <one line: what was split/reordered and why>
 

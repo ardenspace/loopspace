@@ -1,5 +1,67 @@
 # Changelog
 
+## 0.16.0 — 2026-07-15
+
+**Halt reduction — relief gates in the stall policy, a TDD route for
+boundary-overrun deadlocks, panel debt, a plan-time density rule, and
+halt notifications that carry the decision.**
+
+Why: the gridcalc hybrid run (2026-07-14, complete, oracle 119/134)
+needed 8 human decisions across ~12h of "unattended" running — and 6 of
+the 8 were mechanical. Two were "route this one task's implementer to a
+stronger model" (the second explicitly applied the first's precedent);
+three were "resume narrowly and fix exactly what the verifier named" on
+tasks whose FAIL findings were visibly converging (each passed in 1–2
+attempts after resume — the halts interrupted fixes in progress); one
+was a deadlock the rules themselves created (a strong implementer built
+past a re-planned subtask boundary, leaving the next subtask unable to
+produce failed-first evidence, so the verifier FAILed it 6 times for
+following the rules). The genuinely human halts — an infra repair and a
+re-plan structure choice — were 2 of 8. 0.16 removes the mechanical six
+at their sources and makes the remaining halts decidable from a phone.
+
+- **Pre-existing-behavior TDD route** (agent-prompts.md, templates
+  A/B/D): when the behavior a task must build already exists in the
+  tree (an earlier task overran its boundary), the failed-first
+  evidence comes from temporarily disabling exactly that path — red,
+  restore, green — declared on a new `pre-existing:` report line. The
+  verifier templates get the matching branch: the correctness lens
+  extends its mechanical stash to the named earlier-task files
+  (cross-checked against PRIOR WORK; naming files no earlier task
+  touched is itself a FAIL), because stashing this task's files alone
+  would leave the suite green and fail an honest implementer — which is
+  exactly how the hybrid run's 2.2 deadlocked. The run itself
+  discovered this route at 2.3; 0.16 makes it the standard one.
+- **Relief gates in the stall policy** (looprun): once per task each,
+  guarded by their own journal entries, checked in order. Gate 1,
+  narrow resume — FAIL finding counts strictly decreasing and the final
+  findings all concrete (missing test/case/line): reset attempts,
+  retry with the findings, instead of halting; checked *before* the
+  diversity burst because the burst resets the tree and would discard
+  converging work. Gate 2, the burst (unchanged). Gate 3, escalation
+  ladder — an optional `implementer_fallback:` field in state.md names
+  a model; on burst exhaustion the task's implementer dispatches route
+  there instead of halting (verifier routing never changes). The halt
+  report records which gates fired.
+- **Panel debt** (looprun, per-task cycle step 0): a done task tagged
+  `risk: heavy` whose journal PASS lacks three lens verdicts means the
+  panel never fully ran — dispatch the missing lenses before anything
+  else, checked before boundary debt so a phase boundary never seals an
+  under-verified task. Self-healing from disk, like boundary debt.
+  (Closes the 0.15.0-rerun residual: its 4.2 passed on a single
+  verifier.)
+- **Randomized-domain density rule** (loopplan): an acceptance
+  criterion mandating randomized/property/differential testing must pin
+  its domain numerically, dense enough that operations collide — an
+  honest 380-line differential reference found 0 mismatches over a
+  200-cell address pool where a 12-cell pool catches the same bug in
+  21/100 seeds. Verifiability panel lens checks it.
+- **Halt notifications carry the decision** (supervise.sh): the HALTED
+  message now includes report.md's `trigger:` line plus its Blocker and
+  Options sections, truncated to 1500 bytes (Telegram's limit is 4096)
+  — a phone is enough to decide; the pointer-only message remains the
+  no-report fallback. supervise tests 22/22 (3 new), portability 34/34.
+
 ## 0.15.2 — 2026-07-13
 
 **Stale-handoff detection and fast-fail on a dead backend.**

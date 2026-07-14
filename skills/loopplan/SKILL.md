@@ -41,6 +41,14 @@ verifier. Each task must have:
 - `acceptance:` — criteria in test-description form. "returns 401 when the
   token is expired", never "auth works". A criterion an agent cannot turn
   into a pass/fail test is a planning bug.
+  A criterion that mandates randomized, property-based, or differential
+  testing must pin the adversarial domain numerically in the criterion
+  itself — "over a 12-cell address pool", "keys from a 4-symbol
+  alphabet" — sized so random operations collide on shared state. An
+  unpinned domain lets an honest generator run so sparse that nothing
+  interacts and the test observes nothing (observed: a correct 380-line
+  differential reference found 0 mismatches over a 200-cell pool; the
+  same reference over 12 cells caught the bug in 21/100 seeds).
 - `risk:` — `light` (config files, simple CRUD, markup, docs, and pure
   in-memory logic with no I/O, no trust boundary, and no new dependency —
   however central: its whole surface is unit-testable, so the single
@@ -64,7 +72,9 @@ same as the spec panel (`[BLOCKING]` / `[NON-BLOCKING]` / `NO FINDINGS`,
 one line each):
 
 1. **Verifiability** — every acceptance criterion machine-checkable? Every
-   R-id covered by a task? Any task without criteria?
+   R-id covered by a task? Any task without criteria? Every
+   randomized/differential criterion's domain pinned dense enough that
+   operations collide?
 2. **Adversarial** — wrong task ordering (task needs something a later task
    builds)? Hidden coupling between tasks in different phases? A phase
    that isn't actually shippable? Tasks too large to implement in one

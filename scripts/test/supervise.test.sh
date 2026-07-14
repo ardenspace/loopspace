@@ -68,6 +68,64 @@ cap="$(mktemp)"
 out="$(CURL_CAPTURE="$cap" PATH="$shim:$PATH" sh "$SCRIPT" "$d" 2>&1)"; rc=$?
 [ "$rc" -eq 0 ] && [ ! -s "$cap" ] && ok || fail "no-telegram-env (rc=$rc, cap=$(cat "$cap"))"
 
+# ---- halt notify carries the report's trigger, blocker, and options ----
+d="$(make_project halted)"
+cat > "$d/.loopspace/report.md" <<'RPT'
+# Halt Report
+version: 1
+written: 2026-07-15
+trigger: task-stall
+
+## Progress
+phase 2 fully done
+
+## Blocker
+task 2.1 stalled after burst
+
+## Options
+- A: replan the task
+- B: escalate implementer
+
+## Awaiting
+Human decision.
+RPT
+cap="$(mktemp)"
+out="$(CURL_CAPTURE="$cap" PATH="$shim:$PATH" \
+       LOOPSPACE_TG_BOT_TOKEN=TESTTOKEN LOOPSPACE_TG_CHAT_ID=12345 \
+       sh "$SCRIPT" "$d" 2>&1)"; rc=$?
+[ "$rc" -eq 0 ] \
+  && grep -q "trigger: task-stall" "$cap" \
+  && grep -q "task 2.1 stalled after burst" "$cap" \
+  && grep -q "A: replan the task" "$cap" \
+  && ! grep -q "phase 2 fully done" "$cap" \
+  && ok || fail "halt-notify-report (rc=$rc, cap=$(cat "$cap"))"
+
+# ---- halt notify report content is truncated (telegram 4096 hard limit) ----
+d="$(make_project halted)"
+{
+  printf '# Halt Report\nversion: 1\ntrigger: task-stall\n\n## Options\n'
+  i=0; while [ "$i" -lt 200 ]; do
+    echo "- A$i: a padding option line to blow past any sane message size"
+    i=$((i+1))
+  done
+} > "$d/.loopspace/report.md"
+cap="$(mktemp)"
+out="$(CURL_CAPTURE="$cap" PATH="$shim:$PATH" \
+       LOOPSPACE_TG_BOT_TOKEN=TESTTOKEN LOOPSPACE_TG_CHAT_ID=12345 \
+       sh "$SCRIPT" "$d" 2>&1)"; rc=$?
+bytes="$(wc -c < "$cap")"
+[ "$rc" -eq 0 ] && [ "$bytes" -lt 2500 ] \
+  && ok || fail "halt-notify-truncated (rc=$rc, bytes=$bytes)"
+
+# ---- halted without report.md => old pointer message, no crash ----
+d="$(make_project halted)"
+cap="$(mktemp)"
+out="$(CURL_CAPTURE="$cap" PATH="$shim:$PATH" \
+       LOOPSPACE_TG_BOT_TOKEN=TESTTOKEN LOOPSPACE_TG_CHAT_ID=12345 \
+       sh "$SCRIPT" "$d" 2>&1)"; rc=$?
+[ "$rc" -eq 0 ] && grep -q "see .loopspace/report.md" "$cap" \
+  && ok || fail "halt-notify-no-report (rc=$rc, cap=$(cat "$cap"))"
+
 # ---- executing: resume advances state to complete after 3 restarts ----
 d="$(make_project executing)"
 mock="$(mktemp)"

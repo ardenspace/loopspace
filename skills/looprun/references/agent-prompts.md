@@ -71,6 +71,16 @@ Stage 3 — TDD:
 4. Run them; confirm they pass.
 Skipping step 2 invalidates your work — the verifier checks for evidence.
 
+Pre-existing behavior: if stage-2 exploration shows the behavior this
+task's criteria demand already exists in the tree (an earlier task built
+past its boundary — PRIOR WORK THIS PHASE or the git log attributes it),
+step 2 is still mandatory and has a standard route: temporarily disable
+exactly the pre-existing path (comment out or revert the minimal hunk —
+never delete files), run your new tests, capture the failure, restore
+the path exactly, and confirm green. Declare it on the `pre-existing:`
+report line. Never skip the red step because "it already works" — a
+test that has never failed proves nothing.
+
 Do not touch files outside this task's scope. Do not implement anything
 the acceptance criteria don't require.
 
@@ -85,6 +95,10 @@ REPORT BACK (exactly this shape, nothing more):
   this to force diversity if this attempt fails>
 - tdd-evidence: <test file> failed-first: <the one-line failure header
   from step 2>
+- pre-existing: <only if the behavior already existed in the tree: the
+  earlier task that built it, the file(s)/symbol(s), and one line
+  confirming the red output above came from the temporary-removal route.
+  Omit otherwise.>
 - files: <comma-separated files created/modified>
 - exports: <public symbols this task added or changed for use outside it,
   module-qualified, one line (e.g. "kvtx.database.Store — set/get/delete/
@@ -129,7 +143,10 @@ CHECKS (mechanical):
    naming the missing case.
 3. Secret scan: no hardcoded credentials/keys/tokens in changed files.
 4. TDD evidence: the implementer's failed-first output is present and
-   plausible for these tests.
+   plausible for these tests. A `pre-existing:` line changes the expected
+   evidence shape, not the requirement: the red output must look like a
+   real failure of these tests with the named earlier-task code disabled
+   — and confirm that code is back in place (the suite passes now).
 5. Contested findings: for each one, re-derive the fact yourself, then
    either confirm the finding (say why the evidence doesn't hold) or drop
    it — a dropped finding must not count against this verdict. Ignore
@@ -223,6 +240,16 @@ CHECKS — correctness lens (the only lens that runs commands):
    that still pass without the implementation don't exercise it: FAIL,
    naming those tests. No implementation files in the list, or not a git
    repository → skip this check and say so in your note.
+   `pre-existing:` line in the report (an earlier task built this
+   behavior past its boundary): stashing this task's files alone is then
+   EXPECTED to leave the suite green — that alone is not a FAIL. Extend
+   the stash to also cover the earlier-task implementation file(s) the
+   line names (cross-check them against PRIOR WORK THIS PHASE; a
+   pre-existing claim naming files no earlier task touched is itself a
+   FAIL — it may be laundering ordinary missing-red evidence), then the
+   tests covering this task's criteria must FAIL; restore with one pop.
+   If the named files cannot be stashed safely, judge the implementer's
+   recorded temporary-removal red output instead and say so in your note.
 5. Prior-work reuse: if PRIOR WORK THIS PHASE lists an export that already
    provides something this task needed, the implementation must import or
    extend it. The exports lines are earlier implementers' self-reports,
@@ -244,7 +271,8 @@ CHECKS — test-integrity lens (read-only, never run the test suite):
 1. TDD evidence: the implementer's failed-first output is present and
    plausible for these tests. (Judge the report text only — the
    correctness lens re-proves failed-first mechanically in git repos;
-   never touch the working tree yourself.)
+   never touch the working tree yourself.) A `pre-existing:` line makes
+   temporary-removal red output the expected evidence shape.
 2. Test-gaming detection: open the tests. Flag empty tests, tests with no
    assertions, tests that mock away the behavior under test.
 

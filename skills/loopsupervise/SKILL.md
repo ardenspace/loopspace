@@ -60,7 +60,9 @@ harness profile (`../../harnesses/`).
 
 - `executing` → process died at the context threshold or crashed → relaunch.
 - `complete` → notify, exit.
-- `halted` → notify "decision needed," exit. Never auto-resume.
+- `halted` → notify "decision needed" with the report's trigger, blocker,
+  and options in the message (a phone is enough to decide), exit. Never
+  auto-resume.
 - No progress across restarts (default 2) → notify "stuck," exit.
 - Absolute restart ceiling (`LOOPSPACE_MAX_RESTARTS`, default 50) → notify and
   exit before launching again, even if every restart shows progress.

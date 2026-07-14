@@ -48,7 +48,11 @@ implementer if briefs stay small and the provider's output-token cap
 and request timeout are raised well past defaults (gridcalc hybrid
 used a 30000-token cap and 900s timeout for a 35B on a single-slot
 server; the defaults' truncation/timeouts had previously masqueraded
-as compliance failures). Guidance: docs/harness-support.md.
+as compliance failures). When looprun's escalation ladder fires
+(`implementer_fallback:` in state.md), route just that task's
+implementer dispatches to the named model — a per-agent model override,
+or the model flag on the subprocess dispatch. Guidance:
+docs/harness-support.md.
 
 ## Local Backend Timeouts
 A single-slot local server (llama.cpp et al.) is slowest exactly when a

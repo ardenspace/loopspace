@@ -61,15 +61,24 @@ below. `run_status: complete` → say so, stop. All file formats:
 
 ```
 next task = first non-done task in plan order
-0. Boundary debt (self-healing, like branch discipline): if any phase
-   before the next task's phase has all its tasks done in state.md but
-   no `[phase N] verified` entry in journal.md, that boundary never ran
-   — a session ended in the window between the phase's last task and
-   its verifier, and "when the last task is done" fired in a session
-   that no longer exists. Run the Phase Boundary for the oldest such
-   phase now, before dispatching anything. The obligation is re-derived
-   from disk on every cycle entry, so it survives crashes and early
-   turn-ends.
+0. Debts (self-healing, like branch discipline — both re-derived from
+   disk on every cycle entry, so they survive crashes and early
+   turn-ends). Check panel debt first: a phase boundary must never seal
+   a task the panel never fully checked.
+   - Panel debt: if any done task carries `risk: heavy` in plan.md but
+     its journal PASS entry records fewer than three lens verdicts, the
+     panel never fully ran — the task was marked done on less
+     verification than template D demands. Dispatch the missing lenses
+     now (template D, the usual waves), before anything else. Any lens
+     FAIL → the task re-enters the per-task cycle as a normal FAIL
+     (status pending, attempts += 1, findings journaled).
+   - Boundary debt: if any phase before the next task's phase has all
+     its tasks done in state.md but no `[phase N] verified` entry in
+     journal.md, that boundary never ran — a session ended in the window
+     between the phase's last task and its verifier, and "when the last
+     task is done" fired in a session that no longer exists. Run the
+     Phase Boundary for the oldest such phase now, before dispatching
+     anything.
 1. Dispatch IMPLEMENTER (fresh) — prompt template A in references/agent-prompts.md
    - carries: Project Facts, spec excerpt (only the R-ids this task
      covers), the task block from plan.md, current handoff.md notes,
@@ -112,8 +121,9 @@ next task = first non-done task in plan order
      Never adjudicate a contest yourself — re-deriving facts is the
      verifier's job, and your diet stays.
 4. PASS → state.md: task done; git checkpoint commit; journal entry
-   including the implementer's `exports:` line (heavy: record all three
-   lens verdicts); next task (fresh implementer)
+   including the implementer's `exports:` line and its `pre-existing:`
+   line if present (heavy: record all three lens verdicts); next task
+   (fresh implementer)
    FAIL → attempts += 1; journal the verifier findings; retry with a NEW
    fresh implementer that receives those findings (template A, findings
    section filled)
@@ -144,10 +154,26 @@ next task = first non-done task in plan order
      `report.md` (trigger: `task-stall`), end turn with the report summary.
    - Spec contradiction or gap → tier 2.
    - Anything else (persistent implementation failure with no plan or
-     spec cause) → **diversity burst**, once per task, before halting.
-     Sequential retries share a failure mode: each fresh implementer
-     converges on roughly the same approach, so attempt 4 fails like
-     attempts 1–3. The burst forces sampling diversity instead:
+     spec cause) → relief gates, then halt. Every gate is once per task,
+     guarded by its own journal entry — grep the journal before
+     granting one.
+
+     **Gate 1 — narrow resume.** Checked before the burst, because the
+     burst resets the tree and would discard converging work: count the
+     numbered findings in each of this task's verifier FAILs, in
+     journal order. If the counts strictly decreased (e.g. 5→3→2) AND
+     every finding in the final FAIL names a concrete missing test,
+     case, or line — not approach-level rework — the attempts are
+     converging, and more incremental retries beat both a burst and a
+     halt. Journal `## [<id>] narrow resume — findings converging
+     (<counts>)`, reset attempts to 0, and continue the task: fresh
+     implementer, template A, findings section = the final FAIL's
+     findings verbatim.
+
+     **Gate 2 — diversity burst.** Sequential retries share a failure
+     mode: each fresh implementer converges on roughly the same
+     approach, so attempt 4 fails like attempts 1–3. The burst forces
+     sampling diversity instead:
      1. Collect the `approach:` lines from every failed attempt.
      2. Up to 3 candidates, strictly one at a time (they share one
         working tree — never parallel). Before each: in a git repo,
@@ -165,9 +191,19 @@ next task = first non-done task in plan order
         of the cycle — panel if heavy). attempts += 1 per candidate.
         First PASS wins: journal `[<id>] burst candidate N — PASS`,
         stop the burst, continue the run.
-     4. All candidates FAIL or BLOCKED → halt: `run_status: halted`,
-        `report.md` (trigger: `task-stall`) listing every approach
-        tried, end turn with the report summary.
+     4. All candidates FAIL or BLOCKED → **gate 3 — escalation
+        ladder** (once per task): if state.md has an
+        `implementer_fallback:` field, journal `## [<id>] escalated
+        implementer → <fallback>`, reset attempts to 0, and continue
+        the task with every implementer dispatch routed to the
+        fallback (the harness profile's Model Routing section says how;
+        verifier routing never changes). The burst stays spent — a
+        later stall on this task finds every gate's journal entry
+        already present and halts. No fallback field, or the gate
+        already spent → halt: `run_status: halted`, `report.md`
+        (trigger: `task-stall`) listing every approach tried — and
+        which relief gates fired, when any did — end turn with the
+        report summary.
 2. **Spec contradiction or gap** → halt: `state.md` `run_status: halted`,
    write `report.md` (trigger: `spec-gap`), end turn with the report
    summary. The spec is the human's contract — never modify it, never
