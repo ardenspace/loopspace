@@ -12,7 +12,7 @@ loopresume records the switch.
 |---------|---------|------|--------|
 | Claude Code | `harnesses/claude-code.md` | A | verified — native home, plugin install |
 | Codex CLI | `harnesses/codex.md` | A (subprocess dispatch) | unverified — validate with a mini-run |
-| OpenCode | `harnesses/opencode.md` | A (subagents) | unverified — primary local-LLM path |
+| OpenCode | `harnesses/opencode.md` | A (subagents) | verified — primary local-LLM path (mini-run 2026-07-10, full hybrid run 2026-07-14) |
 | anything else | `harnesses/generic.md` | C | the floor — role-swap protocol |
 
 Tier meanings (definitions in PROFILE-SPEC.md): **A** — full pipeline
@@ -71,12 +71,28 @@ thinnest, route your strongest model:
 
 | Role | What it needs | Strong-model priority |
 |------|---------------|-----------------------|
-| verifier / panel reviewer | adversarial honesty: re-derive facts, refuse to rubber-stamp | highest |
+| verifier / panel reviewer | adversarial honesty: re-derive facts, refuse to rubber-stamp; a different model lineage than the implementer | highest |
 | orchestrator | procedural discipline across a long session | high |
 | implementer | coding ability, TDD discipline | medium — retries catch weakness |
 
-Rules of thumb: frontier models and large open coder models
-(30B-class and up) hold up across all roles; small local models (≤8B)
-will run the loop, but verification tends to rubber-stamp — expect
-Tier C-grade guarantees regardless of the harness tier, and read the
-journal skeptically.
+Rules of thumb: frontier models hold up across all roles. Large open
+coder models (30B-class) are effective implementers given small,
+self-contained briefs and infrastructure limits raised well past
+defaults — an output-token cap or backend request timeout that is too
+low masquerades as a compliance failure (observed: what looked like
+"dropped reasoning" and "skipped phase boundary" on a 35B were an
+8192-token cap truncating output and a 300s backend timeout killing
+the process; gridcalc runs, 2026-07). Their fitness as orchestrator is
+unproven rather than refuted — the earlier "unfit" reading was mostly
+those infrastructure artifacts. Small local models (≤8B) will run the
+loop, but verification tends to rubber-stamp — expect Tier C-grade
+guarantees regardless of the harness tier, and read the journal
+skeptically.
+
+Lineage matters as much as size: route the verifier to a different
+model lineage than the implementer. Same-mind implement/verify pairs
+share blind spots — a bug the implementer writes is a bug the verifier
+fails to test for — and this reproduces even at frontier scale: in the
+gridcalc hybrid run (2026-07-14) the only shipped bug lived at the
+run's only same-lineage pairing, while the cross-lineage verifier
+caught the same defect class live everywhere else.

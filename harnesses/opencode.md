@@ -5,8 +5,12 @@ tier: A
 verified: 2026-07-10 — subcut mini-run, 4 light tasks on
 ornith-1.0-35b-Q5_K_M (all roles: orchestrator, implementer, verifier).
 Verifier honesty confirmed: caught a real import-setup miss during the run
-and a deliberately planted green-but-wrong test/impl trap. Heavy panel and
-ambiguous specs not yet exercised on this harness.
+and a deliberately planted green-but-wrong test/impl trap.
+2026-07-14 — gridcalc hybrid full run (loopspace 0.15.2): GPT-5.5
+orchestrator + verifier (ChatGPT OAuth) × ornith 35B implementer,
+~12h wall clock, heavy panels and 8 regulation halts exercised; the
+cross-lineage verifier caught bugs live that same-lineage suites had
+missed.
 
 ## Dispatch
 OpenCode has subagent primitives: invoke a task-scoped agent with the
@@ -37,7 +41,14 @@ Headless (`LOOPSPACE_RESUME_CMD`):
 ## Model Routing
 Per-agent model configuration, including local providers (Ollama et
 al.) — this is the primary local-LLM path. Route your strongest model
-to verifier/reviewer roles first; guidance: docs/harness-support.md.
+to verifier/reviewer roles first, and make the verifier a different
+model lineage than the implementer — same-mind pairs share test blind
+spots even at frontier scale. A 30B-class local coder is an effective
+implementer if briefs stay small and the provider's output-token cap
+and request timeout are raised well past defaults (gridcalc hybrid
+used a 30000-token cap and 900s timeout for a 35B on a single-slot
+server; the defaults' truncation/timeouts had previously masqueraded
+as compliance failures). Guidance: docs/harness-support.md.
 
 ## Local Backend Timeouts
 A single-slot local server (llama.cpp et al.) is slowest exactly when a
