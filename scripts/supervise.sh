@@ -108,6 +108,17 @@ read_status() {
   sed -n 's/^run_status:[[:space:]]*//p' "$STATE" 2>/dev/null | head -n 1 | tr -d '\r'
 }
 
+halt_summary() {
+  # $1 = report.md — the trigger line plus the Blocker and Options
+  # sections, truncated, so the notification carries the decision itself
+  # and a phone is enough to make it. 1500 bytes stays well under
+  # Telegram's 4096-char message limit even with multi-byte text.
+  {
+    sed -n 's/^trigger:[[:space:]]*/trigger: /p' "$1" | head -n 1
+    awk '/^## /{f = ($0 == "## Blocker" || $0 == "## Options")} f' "$1"
+  } | head -c 1500
+}
+
 progress_sig() {
   { cat "$STATE" 2>/dev/null
     wc -l 2>/dev/null < .loopspace/journal.md
@@ -139,7 +150,12 @@ while :; do
       notify "run complete — $PROJECT"
       exit 0 ;;
     halted)
-      notify "run HALTED — decision needed (see .loopspace/report.md)"
+      if [ -f .loopspace/report.md ]; then
+        notify "run HALTED — decision needed ($PROJECT)
+$(halt_summary .loopspace/report.md)"
+      else
+        notify "run HALTED — decision needed (see .loopspace/report.md)"
+      fi
       exit 0 ;;
     executing)
       torn=0
