@@ -31,7 +31,7 @@ Never arm silently:
    them and stop; the groups are part of the approved contract, so the
    human fixes the spec (or re-runs `/loopspec`), not you.
 2. Ask the human for the budget — one question, two numbers: the
-   subagent-dispatch cap for the whole run, and the wall-clock cap in
+   dispatch cap for the whole run, and the wall-clock cap in
    hours. (Harness autonomy guidance never overrides this: arming without
    a human-stated budget is forbidden.)
 3. Write to state.md, preserving every existing header field: `mode: lead`,
@@ -50,7 +50,7 @@ Never arm silently:
   plan — `## [lead] plan` followed by your task list, ordering, and what
   changed since the last plan entry. No one approves it; it exists so the
   trajectory is observable and a fresh session can pick up your intent.
-- **Dispatch.** Use subagents or don't — implement directly, dispatch an
+- **Dispatch.** Dispatch or don't — implement directly, dispatch an
   implementer per task, run panels, whatever serves the work (dispatch
   mechanics per the harness profile in `../../harnesses/`). Journal every
   dispatch as a `## [dispatch] <role/model> — <what>` line: that line is
