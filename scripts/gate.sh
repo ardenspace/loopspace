@@ -171,4 +171,39 @@ fi
 } >> "$LEDGER"
 echo "gate: $gid FAIL"
 sed -n '/^findings:/,$p' "$out_file"
+n="$(consecutive_fails "$gid")"
+if [ "$n" -ge "$MAX_FAIL" ]; then
+  branch="$(git rev-parse --abbrev-ref HEAD 2>/dev/null)"
+  last_pass="$(grep '^## \[gate .*\] verdict: PASS' "$LEDGER" | tail -n 1 | sed 's/^## \[gate \([^]]*\)\].*/\1/')"
+  {
+    echo "# Halt Report"
+    echo "version: 1"
+    echo "written: $(date +%Y-%m-%d)"
+    echo "trigger: gate-stall"
+    echo "harness: $(field harness "$STATE")"
+    echo "tier: $(field tier "$STATE")"
+    echo "current_branch: $branch"
+    echo "last_verified_gate: ${last_pass:-none}"
+    echo ""
+    echo "## Progress"
+    grep '^## \[gate' "$LEDGER" | sed 's/^## /- /'
+    echo ""
+    echo "## Blocker"
+    echo "Gate $gid failed $n consecutive times. Latest findings:"
+    sed -n '/^findings:/,$p' "$out_file"
+    echo ""
+    echo "## Options"
+    echo "- A: fix the findings (interactively or by resuming the lead) and re-gate"
+    echo "- B: the findings reveal a spec problem — amend via /loopnext"
+    echo "- C: abandon the run; merge nothing"
+    echo ""
+    echo "## Awaiting"
+    echo "Human decision. Resume the run after resolving."
+  } > .loopspace/report.md
+  set_status halted
+  git add .loopspace
+  git commit -q -m "loopspace: halted — gate $gid stalled" 2>/dev/null || true
+  echo "gate: $gid failed $n consecutive times — run halted (report.md written)"
+  exit 2
+fi
 exit 1

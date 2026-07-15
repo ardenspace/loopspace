@@ -155,5 +155,40 @@ stub="$(stub_verifier "$d" "$d/report.txt")"
 out="$(LOOPSPACE_GATE_CMD="sh $stub" sh "$SCRIPT" "$d" G1 2>&1)"; rc=$?
 [ "$rc" -eq 0 ] && ok || fail "trailing-space verdict (rc=$rc, $out)"
 
+# ---- consecutive-FAIL halt (3rd FAIL on same gate) ----
+d="$(make_lead_project)"; canned_fail "$d/report.txt"
+stub="$(stub_verifier "$d" "$d/report.txt")"
+LOOPSPACE_GATE_CMD="sh $stub" sh "$SCRIPT" "$d" G1 >/dev/null 2>&1
+LOOPSPACE_GATE_CMD="sh $stub" sh "$SCRIPT" "$d" G1 >/dev/null 2>&1
+out="$(LOOPSPACE_GATE_CMD="sh $stub" sh "$SCRIPT" "$d" G1 2>&1)"; rc=$?
+[ "$rc" -eq 2 ] && ok || fail "halt rc (rc=$rc, $out)"
+grep -q '^trigger: gate-stall' "$d/.loopspace/report.md" && ok || fail "report trigger"
+grep -q '^last_verified_gate: none' "$d/.loopspace/report.md" && ok || fail "report last gate"
+grep -q '^run_status: halted' "$d/.loopspace/state.md" && ok || fail "halted state"
+git -C "$d" log --oneline | grep -q "halted — gate G1 stalled" && ok || fail "halt commit"
+
+# ---- a PASS resets the FAIL count ----
+d="$(make_lead_project)"
+canned_fail "$d/fail.txt"; canned_pass "$d/pass.txt"
+stubf="$(stub_verifier "$d" "$d/fail.txt")"
+LOOPSPACE_GATE_CMD="sh $stubf" sh "$SCRIPT" "$d" G1 >/dev/null 2>&1
+LOOPSPACE_GATE_CMD="sh $stubf" sh "$SCRIPT" "$d" G1 >/dev/null 2>&1
+cat > "$d/stub2.sh" <<EOF
+#!/bin/sh
+cat > /dev/null
+cat "$d/pass.txt"
+EOF
+LOOPSPACE_GATE_CMD="sh $d/stub2.sh" sh "$SCRIPT" "$d" G1 >/dev/null 2>&1
+out="$(LOOPSPACE_GATE_CMD="sh $stubf" sh "$SCRIPT" "$d" G1 2>&1)"; rc=$?
+[ "$rc" -eq 1 ] && ok || fail "PASS resets fail count (rc=$rc — a halt means it didn't reset)"
+
+# ---- fails on different gates never pool ----
+d="$(make_lead_project)"; canned_fail "$d/report.txt"
+stub="$(stub_verifier "$d" "$d/report.txt")"
+LOOPSPACE_GATE_CMD="sh $stub" sh "$SCRIPT" "$d" G1 >/dev/null 2>&1
+LOOPSPACE_GATE_CMD="sh $stub" sh "$SCRIPT" "$d" G1 >/dev/null 2>&1
+out="$(LOOPSPACE_GATE_CMD="sh $stub" sh "$SCRIPT" "$d" G2 2>&1)"; rc=$?
+[ "$rc" -eq 1 ] && ok || fail "per-gate fail isolation (rc=$rc)"
+
 echo "gate.test.sh: $PASS passed, $FAIL failed"
 [ "$FAIL" -eq 0 ]
