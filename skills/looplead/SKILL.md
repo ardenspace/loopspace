@@ -68,11 +68,14 @@ Never arm silently:
    - exit 1 (FAIL): findings are on stdout and in `.loopspace/gates.md`.
      Repair, then re-gate the same group. Findings are verdicts — never
      argue with them in your own context; the next gate is the appeal.
-   - exit 2: the run is halted (3 consecutive FAILs) — report.md exists.
+   - exit 2: the run is halted (LOOPSPACE_GATE_MAX_FAIL consecutive FAILs, default 3) — report.md exists.
      End the turn immediately; a human decides.
-   - exit 3: infrastructure error (verifier timeout/API outage) — not a
-     FAIL. Retry once after a pause; if it persists, journal it and end
-     the turn so the supervisor/human sees it.
+   - exit 3: gate error — the machinery could not deliver a verdict; never
+     a FAIL. Read the script's stderr: a verifier timeout or API outage is
+     transient — retry once after a pause. Anything else it names (unknown
+     group id, wrong run_status, a commit the repo refused) is
+     deterministic — fix what it names if it is yours to fix, otherwise
+     journal it and end the turn so the supervisor/human sees it.
    A group without a ledger PASS does not exist as progress, whatever
    your own tests say.
 2. **Never write the machine's files.** `.loopspace/gates.md` is
