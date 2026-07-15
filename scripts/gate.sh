@@ -136,8 +136,26 @@ trap 'rm -f "$prompt_file" "$out_file"' EXIT
 } > "$prompt_file"
 
 # eval so quoted args in GATE_CMD parse correctly (same seam as supervise.sh)
-eval "$GATE_CMD" < "$prompt_file" > "$out_file" 2>&1
-vrc=$?
+if [ "$GATE_TIMEOUT" -gt 0 ]; then
+  eval "$GATE_CMD" < "$prompt_file" > "$out_file" 2>&1 &
+  vpid=$!
+  waited=0
+  while kill -0 "$vpid" 2>/dev/null; do
+    sleep 2
+    waited=$((waited + 2))
+    if [ "$waited" -ge "$GATE_TIMEOUT" ]; then
+      kill_tree "$vpid"
+      ledger "## [gate $gid] error — verifier timeout after ${GATE_TIMEOUT}s"
+      echo "gate: verifier timed out after ${GATE_TIMEOUT}s" >&2
+      exit 3
+    fi
+  done
+  wait "$vpid" 2>/dev/null
+  vrc=$?
+else
+  eval "$GATE_CMD" < "$prompt_file" > "$out_file" 2>&1
+  vrc=$?
+fi
 
 verdict="$(sed -n 's/^verdict:[[:space:]]*//p' "$out_file" | tail -n 1 | tr -d '\r' | sed 's/[[:space:]]*$//')"
 case "$verdict" in

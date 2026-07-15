@@ -237,5 +237,19 @@ git -C "$d" log --oneline | grep -q "run complete — final gate PASS" && ok || 
 out="$(LOOPSPACE_GATE_CMD="sh $stub" sh "$SCRIPT" "$d" G1 2>&1)"; rc=$?
 [ "$rc" -eq 3 ] && ok || fail "gate after complete refused (rc=$rc)"
 
+# ---- timeout kills a hung verifier ----
+d="$(make_lead_project)"
+cat > "$d/hang.sh" <<'EOF'
+#!/bin/sh
+cat > /dev/null
+sleep 60
+EOF
+start=$(date +%s)
+out="$(LOOPSPACE_GATE_CMD="sh $d/hang.sh" LOOPSPACE_GATE_TIMEOUT=2 sh "$SCRIPT" "$d" G1 2>&1)"; rc=$?
+dur=$(( $(date +%s) - start ))
+[ "$rc" -eq 3 ] && ok || fail "timeout rc (rc=$rc)"
+[ "$dur" -lt 30 ] && ok || fail "timeout took ${dur}s — watchdog didn't kill"
+grep -q '^## \[gate G1\] error — verifier timeout' "$d/.loopspace/gates.md" && ok || fail "timeout ledger entry"
+
 echo "gate.test.sh: $PASS passed, $FAIL failed"
 [ "$FAIL" -eq 0 ]
