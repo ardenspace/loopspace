@@ -301,6 +301,47 @@ d="$(make_project executing)"
 out="$(LOOPSPACE_MAX_FASTFAIL=abc LOOPSPACE_RESUME_CMD="true" sh "$SCRIPT" "$d" 2>&1)"; rc=$?
 [ "$rc" -eq 1 ] && echo "$out" | grep -qi "integer" && ok || fail "max-fastfail-nonnumeric (rc=$rc, out=$out)"
 
+# make_lead_project <run_status> [budget_hours] -> lead-mode variant
+make_lead_project() {
+  d="$(make_project "$1")"
+  {
+    echo "mode: lead"
+    echo "budget_wall_hours: ${2:-4}"
+  } >> "$d/.loopspace/state.md"
+  echo "$d"
+}
+
+# ---- lead: complete WITHOUT final-gate PASS is an integrity violation ----
+d="$(make_lead_project complete)"
+printf '# Gates\nversion: 1\n## [gate G1] verdict: PASS — t\n' > "$d/.loopspace/gates.md"
+out="$(sh "$SCRIPT" "$d" 2>&1)"; rc=$?
+[ "$rc" -eq 1 ] && echo "$out" | grep -q "WITHOUT a final-gate PASS" && ok || fail "lead complete integrity (rc=$rc, $out)"
+
+# ---- lead: complete WITH final-gate PASS is normal completion ----
+d="$(make_lead_project complete)"
+printf '# Gates\nversion: 1\n## [gate final] verdict: PASS — t\n' > "$d/.loopspace/gates.md"
+out="$(sh "$SCRIPT" "$d" 2>&1)"; rc=$?
+[ "$rc" -eq 0 ] && echo "$out" | grep -q "run complete" && ok || fail "lead complete happy (rc=$rc, $out)"
+
+# ---- thick complete unaffected (no gates.md, no mode) ----
+d="$(make_project complete)"
+out="$(sh "$SCRIPT" "$d" 2>&1)"; rc=$?
+[ "$rc" -eq 0 ] && echo "$out" | grep -q "run complete" && ok || fail "thick complete unchanged (rc=$rc)"
+
+# ---- lead: wall-clock budget exhausts ----
+d="$(make_lead_project executing)"
+out="$(LOOPSPACE_WALL_BUDGET=1 \
+       LOOPSPACE_RESUME_CMD='sh -c "sleep 2; echo x >> .loopspace/journal.md"' \
+       LOOPSPACE_STALL_TIMEOUT=0 sh "$SCRIPT" "$d" 2>&1)"; rc=$?
+[ "$rc" -eq 1 ] && echo "$out" | grep -q "wall-clock budget exhausted" && ok || fail "wall budget (rc=$rc, $out)"
+
+# ---- gates.md feeds the progress signature ----
+d="$(make_lead_project executing)"
+out="$(LOOPSPACE_RESUME_CMD='sh -c "echo g >> .loopspace/gates.md"' \
+       LOOPSPACE_STALL_TIMEOUT=0 LOOPSPACE_MAX_RESTARTS=3 sh "$SCRIPT" "$d" 2>&1)"; rc=$?
+echo "$out" | grep -q "no progress" && fail "gates.md progress not seen" || ok
+echo "$out" | grep -q "LOOPSPACE_MAX_RESTARTS" && ok || fail "expected restart-ceiling exit (rc=$rc, $out)"
+
 echo "----"
 echo "PASS=$PASS FAIL=$FAIL"
 [ "$FAIL" -eq 0 ]
