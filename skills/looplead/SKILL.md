@@ -50,7 +50,7 @@ Never arm silently:
   plan — `## [lead] plan` followed by your task list, ordering, and what
   changed since the last plan entry. No one approves it; it exists so the
   trajectory is observable and a fresh session can pick up your intent.
-- **Dispatch.** Dispatch or don't — implement directly, dispatch an
+- **Dispatch.** Delegate or don't — implement directly, dispatch an
   implementer per task, run panels, whatever serves the work (dispatch
   mechanics per the harness profile in `../../harnesses/`). Journal every
   dispatch as a `## [dispatch] <role/model> — <what>` line: that line is

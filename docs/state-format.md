@@ -162,7 +162,7 @@ implementer_fallback: openai/gpt-5.5
                             # before or during a run); never set by a skill.
 mode: lead                  # optional; absent = conducted (looprun). Set by
                             # looplead's arming step, with human approval.
-budget_dispatches: 40       # lead mode only — subagent-dispatch cap for the
+budget_dispatches: 40       # lead mode only — dispatch cap for the
                             # whole run. Self-accounted: the lead journals
                             # `## [dispatch]` lines and must stay under it.
 budget_wall_hours: 12       # lead mode only — wall-clock cap, enforced by
