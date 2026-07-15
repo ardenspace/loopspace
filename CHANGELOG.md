@@ -32,7 +32,10 @@ mechanical outcome boundaries.
 - Thick mode (looprun/loopplan) is untouched — 0.16 semantics exactly.
 - Known limits (recorded, not hidden): the dispatch cap is lead-honesty
   self-accounting (`## [dispatch]` journal lines), not mechanical; the
-  wall budget is measured per supervisor invocation.
+  wall budget is measured per supervisor invocation; and the gate's
+  independence is bounded by lead-writable inputs — Project Facts feed
+  the verifier prompt and the ledger's sole-writer rule is contract, not
+  mechanism (the final gate's fresh re-sweep is the backstop).
 
 ## 0.16.0 — 2026-07-15
 

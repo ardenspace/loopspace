@@ -263,5 +263,33 @@ out="$(LOOPSPACE_GATE_CMD="sh $d/slow.sh" LOOPSPACE_GATE_TIMEOUT=4 sh "$SCRIPT" 
 [ "$rc" -eq 0 ] && ok || fail "deadline-finish verdict kept (rc=$rc, $out)"
 grep -q '^## \[gate G1\] verdict: PASS' "$d/.loopspace/gates.md" && ok || fail "deadline-finish ledger PASS"
 
+# ---- watchdog kill discards unrestored verifier mutations ----
+d="$(make_lead_project)"
+echo "GOOD" > "$d/impl.txt"
+git -C "$d" add -A && git -C "$d" commit -qm "lead work"
+cat > "$d/mutate-hang.sh" <<EOF
+#!/bin/sh
+cat > /dev/null
+echo "MUTATED" > "$d/impl.txt"
+sleep 60
+EOF
+out="$(LOOPSPACE_GATE_CMD="sh $d/mutate-hang.sh" LOOPSPACE_GATE_TIMEOUT=2 sh "$SCRIPT" "$d" G1 2>&1)"; rc=$?
+[ "$rc" -eq 3 ] && ok || fail "mutate-hang rc (rc=$rc)"
+[ "$(cat "$d/impl.txt")" = "GOOD" ] && ok || fail "verifier mutation survived watchdog kill"
+
+# ---- unparseable-verdict death also discards mutations ----
+d="$(make_lead_project)"
+echo "GOOD" > "$d/impl.txt"
+git -C "$d" add -A && git -C "$d" commit -qm "lead work"
+cat > "$d/mutate-die.sh" <<EOF
+#!/bin/sh
+cat > /dev/null
+echo "MUTATED" > "$d/impl.txt"
+echo "API error: overloaded"
+EOF
+out="$(LOOPSPACE_GATE_CMD="sh $d/mutate-die.sh" sh "$SCRIPT" "$d" G1 2>&1)"; rc=$?
+[ "$rc" -eq 3 ] && ok || fail "mutate-die rc (rc=$rc)"
+[ "$(cat "$d/impl.txt")" = "GOOD" ] && ok || fail "verifier mutation survived unparseable-verdict death"
+
 echo "gate.test.sh: $PASS passed, $FAIL failed"
 [ "$FAIL" -eq 0 ]

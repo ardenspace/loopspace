@@ -16,7 +16,11 @@
 #                           stdout (default: claude -p --dangerously-skip-permissions)
 #   LOOPSPACE_GATE_TIMEOUT  seconds before the verifier is killed
 #                           (default 2400; keep it below the supervisor's
-#                           LOOPSPACE_STALL_TIMEOUT; 0 disables)
+#                           LOOPSPACE_STALL_TIMEOUT; 0 disables). Any
+#                           non-zero value adds up to ~2s of poll
+#                           quantization latency per gate call (the
+#                           watchdog's sleep interval) — a steady-state
+#                           cost paid on every call, not just on timeouts.
 #   LOOPSPACE_GATE_MAX_FAIL consecutive FAILs on one gate before the run
 #                           halts (default 3)
 #
@@ -72,7 +76,7 @@ groups="$(spec_groups)"
 [ -n "$groups" ] || { echo "gate: spec.md has no '## Acceptance Groups' section" >&2; exit 3; }
 
 if [ "$GATE" != "--final" ]; then
-  echo "$groups" | grep -qx "$GATE" \
+  echo "$groups" | grep -qxF "$GATE" \
     || { echo "gate: group '$GATE' not in spec.md Acceptance Groups" >&2; exit 3; }
 fi
 gid="$GATE"
@@ -146,6 +150,10 @@ if [ "$GATE_TIMEOUT" -gt 0 ]; then
     if [ "$waited" -ge "$GATE_TIMEOUT" ]; then
       kill -0 "$vpid" 2>/dev/null || break  # finished during the sleep — take its verdict
       kill_tree "$vpid"
+      # discard any unrestored verifier mutations — HEAD is the candidate
+      # commit, so tracked files are exactly the lead's work; untracked
+      # probe files are unaffected
+      git checkout -- . 2>/dev/null
       ledger "## [gate $gid] error — verifier timeout after ${GATE_TIMEOUT}s"
       echo "gate: verifier timed out after ${GATE_TIMEOUT}s" >&2
       exit 3
@@ -162,6 +170,10 @@ verdict="$(sed -n 's/^verdict:[[:space:]]*//p' "$out_file" | tail -n 1 | tr -d '
 case "$verdict" in
   PASS|FAIL) ;;
   *)
+    # discard any unrestored verifier mutations — HEAD is the candidate
+    # commit, so tracked files are exactly the lead's work; untracked
+    # probe files are unaffected
+    git checkout -- . 2>/dev/null
     ledger "## [gate $gid] error — no parseable verdict (rc=$vrc)"
     echo "gate: verifier returned no parseable verdict (rc=$vrc); output tail:" >&2
     tail -n 20 "$out_file" >&2

@@ -334,6 +334,12 @@ out="$(LOOPSPACE_WALL_BUDGET=1 \
        LOOPSPACE_RESUME_CMD='sh -c "sleep 2; echo x >> .loopspace/journal.md"' \
        LOOPSPACE_STALL_TIMEOUT=0 sh "$SCRIPT" "$d" 2>&1)"; rc=$?
 [ "$rc" -eq 1 ] && echo "$out" | grep -q "wall-clock budget exhausted" && ok || fail "wall budget (rc=$rc, $out)"
+echo "$out" | grep -q "lead wall budget = 1s" && ok || fail "wall budget announced once (rc=$rc, $out)"
+
+# ---- malformed LOOPSPACE_WALL_BUDGET must not silently disable ----
+d="$(make_lead_project executing)"
+out="$(LOOPSPACE_WALL_BUDGET=12h LOOPSPACE_RESUME_CMD="true" sh "$SCRIPT" "$d" 2>&1)"; rc=$?
+[ "$rc" -eq 1 ] && echo "$out" | grep -q "LOOPSPACE_WALL_BUDGET" && ok || fail "malformed wall budget (rc=$rc, $out)"
 
 # ---- gates.md feeds the progress signature ----
 d="$(make_lead_project executing)"

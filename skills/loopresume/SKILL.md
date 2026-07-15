@@ -72,6 +72,12 @@ only `.loopspace/` can continue exactly. This skill is that read path.
   group's own PASS line (`gate:none` → stale if any PASS exists). Stale →
   same rule as above: trust gates.md + the journal tail, read the
   handoff's warnings as history.
+- **Lead mode, dangling gate.** gates.md ends with an `opened` line that has
+  no verdict/error line after it, and tracked files are dirty → a session
+  died mid-gate: the modifications are a dead verifier's leftovers, not
+  lead work (the candidate commit made HEAD exactly the lead's tree).
+  Restore tracked files (`git checkout -- .`), journal
+  `## [lead] dead gate <id> — verifier leftovers discarded`, and resume.
 - Corrupted/contradictory state you cannot mechanically reconcile → report
   precisely what disagrees and stop. Never guess a position.
 
@@ -95,9 +101,10 @@ for status, stop here.
   advisories into the next run.
 - `spec` → state.md has `run: N` with N≥2? An interrupted loopnext —
   suggest `/loopnext`; it resumes its own amendment draft. Otherwise:
-  `spec.md` approved? suggest `/loopplan`. Still draft or absent?
-  suggest `/loopspec` — it resumes from the existing draft and interview
-  answers already captured in it.
+  `spec.md` approved? suggest `/loopplan` — or `/looplead` when it carries
+  an `## Acceptance Groups` section (a lead-intent spec whose arming never
+  ran). Still draft or absent? suggest `/loopspec` — it resumes from the
+  existing draft and interview answers already captured in it.
 - `planning` → state.md has `run: N` with N≥2? suggest `/loopnext` (its
   delta-plan stage). Otherwise: `plan.md` approved (crash before state
   was rewritten)? suggest `/looprun`. Otherwise suggest `/loopplan` to

@@ -92,6 +92,12 @@ case "$FASTFAIL_SECS" in
     exit 1 ;;
 esac
 
+case "${LOOPSPACE_WALL_BUDGET:-0}" in
+  *[!0-9]*)
+    echo "supervise: LOOPSPACE_WALL_BUDGET must be a non-negative integer of seconds (got '$LOOPSPACE_WALL_BUDGET')" >&2
+    exit 1 ;;
+esac
+
 cd "$PROJECT" 2>/dev/null || { echo "supervise: cannot cd to '$PROJECT'" >&2; exit 1; }
 STATE=".loopspace/state.md"
 SUPER_START="$(date +%s)"
@@ -182,6 +188,14 @@ $(halt_summary .loopspace/report.md)"
     executing)
       if [ "$(read_field mode)" = "lead" ]; then
         budget="$(wall_budget_secs)"
+        if [ -z "${_budget_announced:-}" ]; then
+          _budget_announced=1
+          if [ "$budget" -gt 0 ]; then
+            echo "supervise: lead wall budget = ${budget}s"
+          else
+            echo "supervise: lead wall budget = off (no valid budget set)"
+          fi
+        fi
         if [ "$budget" -gt 0 ] && [ $(( $(date +%s) - SUPER_START )) -ge "$budget" ]; then
           notify "wall-clock budget exhausted (${budget}s since supervisor start) — stopping ($PROJECT)"
           exit 1
