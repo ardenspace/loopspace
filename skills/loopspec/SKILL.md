@@ -145,7 +145,10 @@ On approval:
    an approval commit. In a non-git project, skip this step entirely: the
    absent branch fields in state.md are how every downstream skill knows
    to skip branch logic too.
-3. Suggest running `/loopplan`.
+3. Suggest running `/loopplan` — or `/looplead` when the human chose lead
+   mode (thin harness; requires the spec to carry an `## Acceptance
+   Groups` section grouping every R-id, so add it before approval when
+   they say so).
 
 ## Rules
 

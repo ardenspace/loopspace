@@ -16,7 +16,10 @@ only `.loopspace/` can continue exactly. This skill is that read path.
    from `spec.md`/`plan.md` `status:` fields, report what you inferred, and
    recreate state.md to match before continuing.
 2. `.loopspace/plan.md` — the task tree (skim: current phase in full,
-   other phases by headers only — keep context light)
+   other phases by headers only — keep context light). **Lead mode**
+   (state.md has `mode: lead`): there is no plan.md — read
+   `.loopspace/gates.md` instead (tail: the last few gate entries; which
+   groups have a `verdict: PASS`).
 3. `.loopspace/spec.md` — Goals, Non-Goals, and the R-ids covered by the
    current phase only
 4. `.loopspace/handoff.md` — the previous session's notes (may not exist
@@ -31,7 +34,9 @@ only `.loopspace/` can continue exactly. This skill is that read path.
 
 - Every file's `version:` is one you understand (currently `1`). Unknown
   version → stop and report; do not guess.
-- `current_task` in state.md exists in plan.md.
+- `current_task` in state.md exists in plan.md. (Lead mode: skip — there
+  is no task table; position lives in the journal's `## [lead]` entries
+  and gates.md.)
 - state.md has branch fields → the checked-out branch must equal
   `current_branch`; if it doesn't, check out `current_branch` before
   continuing — a fresh session starts wherever the human left the repo,
@@ -62,6 +67,17 @@ only `.loopspace/` can continue exactly. This skill is that read path.
   true — read them as historical warnings, nothing more. No `position:`
   field (pre-0.15.2 handoff) → freshness is unknown: prefer state.md +
   journal over the handoff wherever they disagree.
+- **Lead-mode handoff freshness.** `position: gate:<G>` → stale if
+  gates.md holds a `verdict: PASS` for any gate entered after that
+  group's own PASS line (`gate:none` → stale if any PASS exists). Stale →
+  same rule as above: trust gates.md + the journal tail, read the
+  handoff's warnings as history.
+- **Lead mode, dangling gate.** gates.md ends with an `opened` line that has
+  no verdict/error line after it, and tracked files are dirty → a session
+  died mid-gate: the modifications are a dead verifier's leftovers, not
+  lead work (the candidate commit made HEAD exactly the lead's tree).
+  Restore tracked files (`git checkout -- .`), journal
+  `## [lead] dead gate <id> — verifier leftovers discarded`, and resume.
 - Corrupted/contradictory state you cannot mechanically reconcile → report
   precisely what disagrees and stop. Never guess a position.
 
@@ -73,19 +89,22 @@ for status, stop here.
 
 ## Step 4 — Continue by run_status
 
-- `executing` → invoke the looprun skill and re-enter the per-task
-  cycle at `current_task`.
+- `executing` → invoke the looprun skill and re-enter the per-task cycle
+  at `current_task`. Lead mode (`mode: lead` in state.md) → invoke the
+  looplead skill instead; it re-plans from its own journal entries.
 - `halted` → summarize `report.md` and its options; await the human's
   decision. Once they decide, hand over to the looprun skill's Halt-Resume
-  procedure — never restart the loop on your own.
+  procedure (lead mode: the looplead skill's) — never restart the loop on
+  your own.
 - `complete` → say so; if the human wants to change or extend what was
   built, suggest `/loopnext` — it turns usage feedback and the journal's
   advisories into the next run.
 - `spec` → state.md has `run: N` with N≥2? An interrupted loopnext —
   suggest `/loopnext`; it resumes its own amendment draft. Otherwise:
-  `spec.md` approved? suggest `/loopplan`. Still draft or absent?
-  suggest `/loopspec` — it resumes from the existing draft and interview
-  answers already captured in it.
+  `spec.md` approved? suggest `/loopplan` — or `/looplead` when it carries
+  an `## Acceptance Groups` section (a lead-intent spec whose arming never
+  ran). Still draft or absent? suggest `/loopspec` — it resumes from the
+  existing draft and interview answers already captured in it.
 - `planning` → state.md has `run: N` with N≥2? suggest `/loopnext` (its
   delta-plan stage). Otherwise: `plan.md` approved (crash before state
   was rewritten)? suggest `/looprun`. Otherwise suggest `/loopplan` to

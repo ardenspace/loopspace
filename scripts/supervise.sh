@@ -32,6 +32,9 @@
 #                           session (rc=0, or one that ran long) resets the
 #                           counter; stall kills are not counted.
 #   LOOPSPACE_FASTFAIL_SECS what counts as a fast exit, in seconds (default 60)
+#   LOOPSPACE_WALL_BUDGET   lead mode: wall-clock budget in seconds, measured
+#                           from this supervisor's start; overrides state.md's
+#                           budget_wall_hours. Exhausted -> notify and stop.
 #
 # Notes:
 #   - The Telegram bot token appears in curl's argv, so it is visible in `ps`
@@ -89,8 +92,15 @@ case "$FASTFAIL_SECS" in
     exit 1 ;;
 esac
 
+case "${LOOPSPACE_WALL_BUDGET:-0}" in
+  *[!0-9]*)
+    echo "supervise: LOOPSPACE_WALL_BUDGET must be a non-negative integer of seconds (got '$LOOPSPACE_WALL_BUDGET')" >&2
+    exit 1 ;;
+esac
+
 cd "$PROJECT" 2>/dev/null || { echo "supervise: cannot cd to '$PROJECT'" >&2; exit 1; }
 STATE=".loopspace/state.md"
+SUPER_START="$(date +%s)"
 
 notify() {
   msg="$1"
@@ -104,8 +114,20 @@ notify() {
   fi
 }
 
-read_status() {
-  sed -n 's/^run_status:[[:space:]]*//p' "$STATE" 2>/dev/null | head -n 1 | tr -d '\r'
+read_field() {
+  sed -n "s/^$1:[[:space:]]*//p" "$STATE" 2>/dev/null | head -n 1 | tr -d '\r'
+}
+
+read_status() { read_field run_status; }
+
+wall_budget_secs() {
+  # env override in seconds wins; else budget_wall_hours from state.md; 0 = off
+  if [ -n "${LOOPSPACE_WALL_BUDGET:-}" ]; then
+    case "$LOOPSPACE_WALL_BUDGET" in ''|*[!0-9]*) echo 0 ;; *) echo "$LOOPSPACE_WALL_BUDGET" ;; esac
+    return
+  fi
+  h="$(read_field budget_wall_hours)"
+  case "$h" in ''|*[!0-9]*) echo 0 ;; *) echo $((h * 3600)) ;; esac
 }
 
 halt_summary() {
@@ -121,6 +143,7 @@ halt_summary() {
 
 progress_sig() {
   { cat "$STATE" 2>/dev/null
+    cat .loopspace/gates.md 2>/dev/null
     wc -l 2>/dev/null < .loopspace/journal.md
   } | cksum
 }
@@ -147,6 +170,11 @@ while :; do
   status="$(read_status)"
   case "$status" in
     complete)
+      if [ "$(read_field mode)" = "lead" ] \
+         && ! grep -q '^## \[gate final\] verdict: PASS' .loopspace/gates.md 2>/dev/null; then
+        notify "run claims complete WITHOUT a final-gate PASS — ledger integrity violation ($PROJECT)"
+        exit 1
+      fi
       notify "run complete — $PROJECT"
       exit 0 ;;
     halted)
@@ -158,6 +186,21 @@ $(halt_summary .loopspace/report.md)"
       fi
       exit 0 ;;
     executing)
+      if [ "$(read_field mode)" = "lead" ]; then
+        budget="$(wall_budget_secs)"
+        if [ -z "${_budget_announced:-}" ]; then
+          _budget_announced=1
+          if [ "$budget" -gt 0 ]; then
+            echo "supervise: lead wall budget = ${budget}s"
+          else
+            echo "supervise: lead wall budget = off (no valid budget set)"
+          fi
+        fi
+        if [ "$budget" -gt 0 ] && [ $(( $(date +%s) - SUPER_START )) -ge "$budget" ]; then
+          notify "wall-clock budget exhausted (${budget}s since supervisor start) — stopping ($PROJECT)"
+          exit 1
+        fi
+      fi
       torn=0
       sig="$(progress_sig)"
       if [ "$sig" = "$prev_sig" ]; then

@@ -53,6 +53,20 @@ amendment and a small delta plan, then hands back to `/looprun`. The spec
 is frozen within a run and versioned between runs, so iteration never
 weakens the unattended loop.
 
+### Lead mode (0.17, experimental)
+
+The pipeline above conducts the process. Lead mode is the thin
+alternative: *give autonomy, enforce invariants*. After `/loopspec`
+(with an `## Acceptance Groups` section), `/looplead` hands the whole
+build to one autonomous lead agent — no plan.md, no dispatch
+choreography. The harness enforces only outcomes, mechanically: a
+cross-lineage verifier gate per acceptance group (`scripts/gate.sh`,
+`claude -p` under the hood — independent probes from the spec plus a
+mutation spot-check), a completion state only the final gate can write,
+budgets, and the same crash-safe disk state. 3 consecutive gate FAILs
+halt for a human. Which philosophy wins at scale is an open experiment;
+thick mode is untouched and remains the default.
+
 ## Install
 
 ```

@@ -80,6 +80,23 @@ Every entry names its origin — `human feedback`, `structure-note <where>`,
 or `spec-concern <where>` — so whether the advisory pipeline is actually
 consumed stays auditable.
 
+### Acceptance Groups (lead mode only)
+
+A spec that will run in lead mode carries one extra section, written by
+loopspec (when the human asks for lead mode) or added by the human before
+approval — it is part of the approved contract and frozen with the rest:
+
+```markdown
+## Acceptance Groups
+- G1: R1, R2, R3 — cell store
+- G2: R4, R5 — formulas
+```
+
+Rules: every R-id in `## Requirements` appears in exactly one group; group
+ids are `G1, G2, …` in spec order. Groups are the checkpoint unit — each
+`G<N>` must pass a gate (scripts/gate.sh) before the run can complete.
+Conducted (looprun) runs ignore this section.
+
 ## plan.md — written by loopplan, frozen after approval except recorded re-plans
 
 ```markdown
@@ -143,6 +160,14 @@ implementer_fallback: openai/gpt-5.5
                             # stall policy. Absent = no ladder, a stall
                             # halts as before. Set by the human (any time
                             # before or during a run); never set by a skill.
+mode: lead                  # optional; absent = conducted (looprun). Set by
+                            # looplead's arming step, with human approval.
+budget_dispatches: 40       # lead mode only — dispatch cap for the
+                            # whole run. Self-accounted: the lead journals
+                            # `## [dispatch]` lines and must stay under it.
+budget_wall_hours: 12       # lead mode only — wall-clock cap, enforced by
+                            # scripts/supervise.sh (env LOOPSPACE_WALL_BUDGET
+                            # in seconds overrides it for ops/tests).
 ```
 
 Added at spec approval (git projects only) — the three branch fields:
@@ -183,7 +208,9 @@ current_branch: loopspace/feat-x/phase-2
 
 Header fields a rewriter does not own are preserved verbatim —
 looprun's per-task rewrites must not drop `run:`, `harness:`, or
-`tier:`.
+`tier:`. In lead mode the same rule covers `mode:` and the two
+`budget_*` fields; the `## Tasks` table does not exist — the lead owns
+its own decomposition in the journal.
 
 `status` values: `pending | in_progress | done | failed`. `failed` is set
 only on the task that triggered a halt; the halt-resume procedure in looprun
@@ -263,10 +290,70 @@ version: 1
 ## [halt] resolved — <one line: the human's decision that cleared the halt>
 
 ## [harness] switched <old> → <new> (tier <A|B|C> → <A|B|C>)
+
+## [lead] plan                     <!-- lead mode only: the lead's journaled
+                                     decomposition — observational, never
+                                     approved; rewritten intent goes in a
+                                     new entry, not an edit -->
+- <task list, ordering, and what changed since the last plan entry>
+
+## [dispatch] <role/model> — <what was delegated, one line>
+                                   <!-- lead mode only: one line per subagent
+                                     dispatch; budget_dispatches accounting
+                                     counts these lines -->
 ```
+
+In lead mode the lead agent writes the journal freely; the two entry shapes above that are mechanical are `## [lead] plan` (observational decomposition) and `## [dispatch]` (one line per subagent dispatch, accounted toward `budget_dispatches`).
 
 Task ids restart at 1.1 inside each run; the nearest run header above an
 entry scopes it.
+
+## gates.md — append-only ledger; written ONLY by scripts/gate.sh (lead mode)
+
+The machine half of lead mode. The lead agent calls `scripts/gate.sh` when
+it believes an acceptance group is done; the script runs a cross-lineage
+verifier and records the verdict here mechanically. The lead never writes
+this file — a checkpoint that isn't in the ledger never happened, and
+`run_status: complete` can only be written by the final gate's PASS path.
+
+```markdown
+# Gates
+version: 1
+
+## [gate G1] opened 2026-07-15T09:00:12Z
+## [gate G1] verdict: PASS — 2026-07-15T09:14:02Z
+- note: <verifier's one line>
+- probes: 4 scenarios → tests/probes_gate_G1.py; all pass
+- mutation: dropped propagation → suite went red
+- commit: abc1234
+
+## [gate G2] opened 2026-07-15T11:02:44Z
+## [gate G2] verdict: FAIL — 2026-07-15T11:15:31Z
+- note: <one line>
+- probes: 3 scenarios → tests/probes_gate_G2.py; 1 failing — see findings
+- mutation: <one line>
+- finding: 1. <numbered, actionable — the lead repairs from these>
+
+## [gate G2] error — verifier timeout after 2400s   <!-- never counts as FAIL -->
+
+## [gate final] blocked 2026-07-16 — ungated groups: G4
+## [gate final] verdict: PASS — 2026-07-16T02:10:09Z
+```
+
+Entry kinds: `opened` (gate started — also the supervisor's liveness
+signal during a long verification), `verdict: PASS|FAIL`, `error` (timeout
+or unparseable verifier output; exit 3, excluded from FAIL counting),
+`blocked` (final gate's mechanical pre-check refused — also not a FAIL).
+Consecutive-FAIL counting per gate id = FAIL verdicts since that gate's
+last PASS verdict; reaching `LOOPSPACE_GATE_MAX_FAIL` (default 3) halts
+the run (trigger `gate-stall`). Every PASS makes a checkpoint commit
+(`loopspace: gate <id> verified`); before every verification the script
+commits the tree as `loopspace: gate <id> candidate` so the verifier's
+mutation-restore (`git checkout -- <file>`) can never destroy uncommitted
+lead work. A PASS verdict line is written only after its verified commit
+succeeds — a gate that dies on a broken repo (exit 3) leaves an error
+line, never a phantom PASS — and the entry itself rides in a follow-up
+`loopspace: gate <id> ledger` commit.
 
 ## handoff.md — overwritten at phase boundaries and at the context threshold
 
@@ -283,6 +370,10 @@ position: <task id>         # last task whose cycle finished when this was
                             # compares this field against the journal: any
                             # verified progress past it means the handoff is
                             # stale and must not be trusted for position.
+                            # Lead mode: `position: gate:<group>` — the
+                            # newest PASS gate when written (`gate:none`
+                            # before the first). loopresume compares it
+                            # against gates.md instead of the journal.
 
 ## Where we are
 <current phase/task, one paragraph max>
@@ -301,13 +392,16 @@ after its content is journaled
 # Halt Report
 version: 1
 written: <YYYY-MM-DD>
-trigger: spec-gap           # task-stall | phase-stall | spec-gap | external-blocker
+trigger: spec-gap           # task-stall | phase-stall | spec-gap | external-blocker | gate-stall (lead mode)
 harness: claude-code        # what actually ran — the honesty rule in
 tier: A                     # harnesses/PROFILE-SPEC.md
 current_branch: loopspace/<slug>/phase-3   # git projects only
 last_verified_phase: loopspace/<slug>/phase-2   # newest phase branch whose
                             # boundary verification passed, or "none" —
                             # lets the human merge verified work only
+last_verified_gate: G2      # lead mode replaces last_verified_phase with
+                            # the newest gate id whose verdict is PASS, or
+                            # "none"
 
 ## Progress
 <what is done, by phase/task id>
