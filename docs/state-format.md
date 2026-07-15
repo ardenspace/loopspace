@@ -290,7 +290,20 @@ version: 1
 ## [halt] resolved — <one line: the human's decision that cleared the halt>
 
 ## [harness] switched <old> → <new> (tier <A|B|C> → <A|B|C>)
+
+## [lead] plan                     <!-- lead mode only: the lead's journaled
+                                     decomposition — observational, never
+                                     approved; rewritten intent goes in a
+                                     new entry, not an edit -->
+- <task list, ordering, and what changed since the last plan entry>
+
+## [dispatch] <role/model> — <what was delegated, one line>
+                                   <!-- lead mode only: one line per subagent
+                                     dispatch; budget_dispatches accounting
+                                     counts these lines -->
 ```
+
+In lead mode the lead agent writes the journal freely; the two entry shapes above that are mechanical are `## [lead] plan` (observational decomposition) and `## [dispatch]` (one line per subagent dispatch, accounted toward `budget_dispatches`).
 
 Task ids restart at 1.1 inside each run; the nearest run header above an
 entry scopes it.
