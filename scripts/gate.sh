@@ -142,21 +142,23 @@ report_line() { sed -n "s/^$1:[[:space:]]*/- $1: /p" "$out_file" | head -n 1 | t
 now="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 
 if [ "$verdict" = "PASS" ]; then
+  git add -A
+  if [ -n "$(git status --porcelain)" ]; then
+    git commit -q -m "loopspace: gate $gid verified" 2>/dev/null || {
+      ledger "## [gate $gid] error — verified commit failed after PASS; verdict not recorded, re-run the gate"
+      echo "gate: verified commit failed after PASS — fix the repo and re-run the gate" >&2
+      exit 3
+    }
+  fi
   {
     echo "## [gate $gid] verdict: PASS — $now"
     report_line note
     report_line probes
     report_line mutation
+    echo "- commit: $(git rev-parse --short HEAD 2>/dev/null)"
   } >> "$LEDGER"
-  git add -A
-  if [ -n "$(git status --porcelain)" ]; then
-    git commit -q -m "loopspace: gate $gid verified" 2>/dev/null || {
-      ledger "## [gate $gid] error — verified commit failed after PASS; checkpoint incomplete"
-      echo "gate: verified commit failed after PASS — fix the repo and re-run the gate" >&2
-      exit 3
-    }
-  fi
-  echo "- commit: $(git rev-parse --short HEAD 2>/dev/null)" >> "$LEDGER"
+  git add .loopspace/gates.md
+  git commit -q -m "loopspace: gate $gid ledger" 2>/dev/null || true
   echo "gate: $gid PASS"
   exit 0
 fi

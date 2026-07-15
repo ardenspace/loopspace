@@ -190,5 +190,31 @@ LOOPSPACE_GATE_CMD="sh $stub" sh "$SCRIPT" "$d" G1 >/dev/null 2>&1
 out="$(LOOPSPACE_GATE_CMD="sh $stub" sh "$SCRIPT" "$d" G2 2>&1)"; rc=$?
 [ "$rc" -eq 1 ] && ok || fail "per-gate fail isolation (rc=$rc)"
 
+# ---- verified-commit failure leaves no phantom PASS ----
+d="$(make_lead_project)"; canned_pass "$d/report.txt"
+stub="$(stub_verifier "$d" "$d/report.txt")"
+cat > "$d/.git/hooks/pre-commit" <<'HOOK'
+#!/bin/sh
+c=0; [ -f .hookcount ] && c=$(cat .hookcount)
+c=$((c+1)); echo "$c" > .hookcount
+[ "$c" -ge 2 ] && exit 1
+exit 0
+HOOK
+chmod +x "$d/.git/hooks/pre-commit"
+echo "dirty" > "$d/lead-work.txt"
+out="$(LOOPSPACE_GATE_CMD="sh $stub" sh "$SCRIPT" "$d" G1 2>&1)"; rc=$?
+[ "$rc" -eq 3 ] && ok || fail "verified-commit-fail rc (rc=$rc, $out)"
+grep -q 'verified commit failed' "$d/.loopspace/gates.md" && ok || fail "verified-fail ledger error line"
+grep -q '^## \[gate G1\] verdict: PASS' "$d/.loopspace/gates.md" && fail "phantom PASS recorded" || ok
+
+# ---- PASS path leaves a fully clean tree (ledger follow-up commit) ----
+d="$(make_lead_project)"; canned_pass "$d/report.txt"
+stub="$(stub_verifier "$d" "$d/report.txt")"
+echo "code" > "$d/impl.txt"
+out="$(LOOPSPACE_GATE_CMD="sh $stub" sh "$SCRIPT" "$d" G1 2>&1)"; rc=$?
+[ "$rc" -eq 0 ] && ok || fail "pass-clean rc (rc=$rc)"
+[ -z "$(git -C "$d" status --porcelain)" ] && ok || fail "tree fully clean after PASS"
+git -C "$d" log --oneline | grep -q "gate G1 ledger" && ok || fail "ledger follow-up commit"
+
 echo "gate.test.sh: $PASS passed, $FAIL failed"
 [ "$FAIL" -eq 0 ]

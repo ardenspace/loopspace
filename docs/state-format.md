@@ -350,7 +350,10 @@ the run (trigger `gate-stall`). Every PASS makes a checkpoint commit
 (`loopspace: gate <id> verified`); before every verification the script
 commits the tree as `loopspace: gate <id> candidate` so the verifier's
 mutation-restore (`git checkout -- <file>`) can never destroy uncommitted
-lead work.
+lead work. A PASS verdict line is written only after its verified commit
+succeeds — a gate that dies on a broken repo (exit 3) leaves an error
+line, never a phantom PASS — and the entry itself rides in a follow-up
+`loopspace: gate <id> ledger` commit.
 
 ## handoff.md — overwritten at phase boundaries and at the context threshold
 
