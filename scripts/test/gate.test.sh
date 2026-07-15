@@ -216,5 +216,26 @@ out="$(LOOPSPACE_GATE_CMD="sh $stub" sh "$SCRIPT" "$d" G1 2>&1)"; rc=$?
 [ -z "$(git -C "$d" status --porcelain)" ] && ok || fail "tree fully clean after PASS"
 git -C "$d" log --oneline | grep -q "gate G1 ledger" && ok || fail "ledger follow-up commit"
 
+# ---- final blocked while a group is ungated ----
+d="$(make_lead_project)"; canned_pass "$d/report.txt"
+stub="$(stub_verifier "$d" "$d/report.txt")"
+LOOPSPACE_GATE_CMD="sh $stub" sh "$SCRIPT" "$d" G1 >/dev/null 2>&1
+out="$(LOOPSPACE_GATE_CMD="sh $stub" sh "$SCRIPT" "$d" --final 2>&1)"; rc=$?
+[ "$rc" -eq 1 ] && echo "$out" | grep -q "ungated groups: G2" && ok || fail "final blocked (rc=$rc, $out)"
+grep -q '^## \[gate final\] blocked' "$d/.loopspace/gates.md" && ok || fail "blocked ledger entry"
+grep -q '^run_status: executing' "$d/.loopspace/state.md" && ok || fail "still executing"
+
+# ---- final PASS completes the run ----
+LOOPSPACE_GATE_CMD="sh $stub" sh "$SCRIPT" "$d" G2 >/dev/null 2>&1
+out="$(LOOPSPACE_GATE_CMD="sh $stub" sh "$SCRIPT" "$d" --final 2>&1)"; rc=$?
+[ "$rc" -eq 0 ] && ok || fail "final pass rc (rc=$rc, $out)"
+grep -q '^## \[gate final\] verdict: PASS' "$d/.loopspace/gates.md" && ok || fail "final ledger entry"
+grep -q '^run_status: complete' "$d/.loopspace/state.md" && ok || fail "complete state"
+git -C "$d" log --oneline | grep -q "run complete — final gate PASS" && ok || fail "final commit"
+
+# ---- a checkpoint gate cannot run after completion ----
+out="$(LOOPSPACE_GATE_CMD="sh $stub" sh "$SCRIPT" "$d" G1 2>&1)"; rc=$?
+[ "$rc" -eq 3 ] && ok || fail "gate after complete refused (rc=$rc)"
+
 echo "gate.test.sh: $PASS passed, $FAIL failed"
 [ "$FAIL" -eq 0 ]

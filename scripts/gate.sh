@@ -93,6 +93,17 @@ kill_tree() {
   kill -9 "$1" 2>/dev/null
 }
 
+# ---- final gate: mechanical pre-check before spending a verifier call ----
+if [ "$gid" = "final" ]; then
+  missing=""
+  for g in $groups; do group_passed "$g" || missing="$missing $g"; done
+  if [ -n "$missing" ]; then
+    ledger "## [gate final] blocked $(date +%Y-%m-%d) — ungated groups:$missing"
+    echo "gate: final blocked — ungated groups:$missing"
+    exit 1
+  fi
+fi
+
 # ---- candidate commit: never let the verifier's mutation-restore touch
 # uncommitted lead work ----
 ledger "## [gate $gid] opened $(date -u +%Y-%m-%dT%H:%M:%SZ)"
@@ -142,9 +153,18 @@ report_line() { sed -n "s/^$1:[[:space:]]*/- $1: /p" "$out_file" | head -n 1 | t
 now="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 
 if [ "$verdict" = "PASS" ]; then
+  if [ "$gid" = "final" ]; then
+    # the ONLY writer of run_status: complete — the lead cannot declare done
+    set_status complete
+    commit_msg="loopspace: run complete — final gate PASS"
+  else
+    commit_msg="loopspace: gate $gid verified"
+  fi
   git add -A
   if [ -n "$(git status --porcelain)" ]; then
-    git commit -q -m "loopspace: gate $gid verified" 2>/dev/null || {
+    git commit -q -m "$commit_msg" 2>/dev/null || {
+      # completion must not stand without its commit — roll the flip back
+      [ "$gid" = "final" ] && set_status executing
       ledger "## [gate $gid] error — verified commit failed after PASS; verdict not recorded, re-run the gate"
       echo "gate: verified commit failed after PASS — fix the repo and re-run the gate" >&2
       exit 3
