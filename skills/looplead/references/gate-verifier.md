@@ -77,6 +77,6 @@ column-0 line (a machine greps these):
 verdict: PASS | FAIL
 note: <one line>
 probes: <N scenarios → probe file path; "all pass" or "M failing — see findings">
-mutation: <one line per mutation: behavior → "suite went red" | "suite stayed green — see findings">
+mutation: <exactly ONE line covering every mutation tried, clauses joined by "; ": behavior → "suite went red" | "suite stayed green — see findings">
 findings: <ONLY if FAIL — after this line, numbered findings, one per
 line, actionable; the lead repairs from these verbatim>
