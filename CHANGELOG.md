@@ -1,5 +1,39 @@
 # Changelog
 
+## 0.17.0 — 2026-07-15
+
+**Lead mode — a thin harness: one autonomous lead agent, machine-enforced
+invariants, no plan.md.** *Give autonomy. Enforce invariants.*
+
+Why: the W′ experiment's thin-harness question — how thin can the harness
+get now that models are strong? Lead mode removes the conducting (task
+trees, dispatch choreography, per-task verdict rules) and keeps only
+mechanical outcome boundaries.
+
+- **`looplead` skill**: spec + acceptance groups + human-stated budget in;
+  the lead plans in the journal (observed, not approved), dispatches or
+  implements as it sees fit, and must pass a gate per acceptance group.
+- **`scripts/gate.sh`**: the invariant engine. Sole writer of the
+  `.loopspace/gates.md` ledger, sole source of checkpoint commits, sole
+  path to `run_status: complete`. Wraps a cross-lineage verifier
+  (`claude -p` by default; `LOOPSPACE_GATE_CMD` seam) that derives its own
+  probes from the spec and mutation-spot-checks. 3 consecutive FAILs on
+  one gate → halt (`gate-stall`). Verifier timeouts/API outages are
+  errors, never FAILs — an outage cannot burn the FAIL budget. A candidate
+  commit before every verification makes mutation-restore safe against
+  uncommitted lead work.
+- **`supervise.sh` lead extensions**: wall-clock budget
+  (`budget_wall_hours` / `LOOPSPACE_WALL_BUDGET`), completion-integrity
+  check (`complete` without a final-gate PASS = loud violation), gate
+  ledger in the progress signature.
+- **loopresume/loopspec** route lead-mode runs; state-format.md gains
+  `## Acceptance Groups`, `mode:`/`budget_*` fields, and the gates.md
+  contract.
+- Thick mode (looprun/loopplan) is untouched — 0.16 semantics exactly.
+- Known limits (recorded, not hidden): the dispatch cap is lead-honesty
+  self-accounting (`## [dispatch]` journal lines), not mechanical; the
+  wall budget is measured per supervisor invocation.
+
 ## 0.16.0 — 2026-07-15
 
 **Halt reduction — relief gates in the stall policy, a TDD route for
