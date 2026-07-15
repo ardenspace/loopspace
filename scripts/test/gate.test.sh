@@ -251,5 +251,17 @@ dur=$(( $(date +%s) - start ))
 [ "$dur" -lt 30 ] && ok || fail "timeout took ${dur}s — watchdog didn't kill"
 grep -q '^## \[gate G1\] error — verifier timeout' "$d/.loopspace/gates.md" && ok || fail "timeout ledger entry"
 
+# ---- verifier finishing at the deadline still yields its verdict ----
+d="$(make_lead_project)"; canned_pass "$d/report.txt"
+cat > "$d/slow.sh" <<EOF
+#!/bin/sh
+cat > /dev/null
+sleep 3
+cat "$d/report.txt"
+EOF
+out="$(LOOPSPACE_GATE_CMD="sh $d/slow.sh" LOOPSPACE_GATE_TIMEOUT=4 sh "$SCRIPT" "$d" G1 2>&1)"; rc=$?
+[ "$rc" -eq 0 ] && ok || fail "deadline-finish verdict kept (rc=$rc, $out)"
+grep -q '^## \[gate G1\] verdict: PASS' "$d/.loopspace/gates.md" && ok || fail "deadline-finish ledger PASS"
+
 echo "gate.test.sh: $PASS passed, $FAIL failed"
 [ "$FAIL" -eq 0 ]

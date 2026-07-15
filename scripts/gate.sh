@@ -144,6 +144,7 @@ if [ "$GATE_TIMEOUT" -gt 0 ]; then
     sleep 2
     waited=$((waited + 2))
     if [ "$waited" -ge "$GATE_TIMEOUT" ]; then
+      kill -0 "$vpid" 2>/dev/null || break  # finished during the sleep — take its verdict
       kill_tree "$vpid"
       ledger "## [gate $gid] error — verifier timeout after ${GATE_TIMEOUT}s"
       echo "gate: verifier timed out after ${GATE_TIMEOUT}s" >&2
