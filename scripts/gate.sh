@@ -92,3 +92,71 @@ kill_tree() {
   for _kt_child in $(pgrep -P "$1" 2>/dev/null); do kill_tree "$_kt_child"; done
   kill -9 "$1" 2>/dev/null
 }
+
+# ---- candidate commit: never let the verifier's mutation-restore touch
+# uncommitted lead work ----
+ledger "## [gate $gid] opened $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+git add -A
+git commit -q -m "loopspace: gate $gid candidate" 2>/dev/null || true
+
+# ---- assemble prompt, run verifier (watchdogged in a later block) ----
+prompt_file="$(mktemp)"
+out_file="$(mktemp)"
+trap 'rm -f "$prompt_file" "$out_file"' EXIT
+{
+  cat "$TEMPLATE"
+  echo ""
+  echo "MODE: $gid"
+  echo ""
+  echo "PROJECT FACTS:"
+  awk '/^## Project Facts/{f=1;next} /^## /{f=0} f' "$STATE"
+  echo ""
+  echo "GATE LEDGER SO FAR:"
+  cat "$LEDGER"
+  echo ""
+  echo "FULL SPEC:"
+  cat "$SPEC"
+} > "$prompt_file"
+
+# eval so quoted args in GATE_CMD parse correctly (same seam as supervise.sh)
+eval "$GATE_CMD" < "$prompt_file" > "$out_file" 2>&1
+vrc=$?
+
+verdict="$(sed -n 's/^verdict:[[:space:]]*//p' "$out_file" | tail -n 1 | tr -d '\r')"
+case "$verdict" in
+  PASS|FAIL) ;;
+  *)
+    ledger "## [gate $gid] error — no parseable verdict (rc=$vrc)"
+    echo "gate: verifier returned no parseable verdict (rc=$vrc); output tail:" >&2
+    tail -n 20 "$out_file" >&2
+    exit 3 ;;
+esac
+
+report_line() { sed -n "s/^$1:[[:space:]]*/- $1: /p" "$out_file" | head -n 1; }
+now="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+
+if [ "$verdict" = "PASS" ]; then
+  {
+    echo "## [gate $gid] verdict: PASS — $now"
+    report_line note
+    report_line probes
+    report_line mutation
+  } >> "$LEDGER"
+  git add -A
+  git commit -q -m "loopspace: gate $gid verified" 2>/dev/null || true
+  echo "- commit: $(git rev-parse --short HEAD 2>/dev/null)" >> "$LEDGER"
+  echo "gate: $gid PASS"
+  exit 0
+fi
+
+# FAIL
+{
+  echo "## [gate $gid] verdict: FAIL — $now"
+  report_line note
+  report_line probes
+  report_line mutation
+  sed -n '/^findings:/,$p' "$out_file" | sed '1d' | sed 's/^/- finding: /'
+} >> "$LEDGER"
+echo "gate: $gid FAIL"
+sed -n '/^findings:/,$p' "$out_file"
+exit 1

@@ -99,5 +99,44 @@ sed 's/^run_status: executing/run_status: halted/' "$d/.loopspace/state.md" > "$
 out="$(sh "$SCRIPT" "$d" G1 2>&1)"; rc=$?
 [ "$rc" -eq 3 ] && echo "$out" | grep -q "not executing" && ok || fail "halted state refused (rc=$rc, $out)"
 
+# ---- PASS path ----
+d="$(make_lead_project)"; canned_pass "$d/report.txt"
+stub="$(stub_verifier "$d" "$d/report.txt")"
+echo "code" > "$d/impl.txt"
+out="$(LOOPSPACE_GATE_CMD="sh $stub" sh "$SCRIPT" "$d" G1 2>&1)"; rc=$?
+[ "$rc" -eq 0 ] || fail "pass rc (rc=$rc, $out)"
+grep -q '^## \[gate G1\] verdict: PASS' "$d/.loopspace/gates.md" && ok || fail "pass ledger entry"
+grep -q '^## \[gate G1\] opened' "$d/.loopspace/gates.md" && ok || fail "opened ledger entry"
+git -C "$d" log --oneline | grep -q "gate G1 verified" && ok || fail "verified commit"
+git -C "$d" log --oneline | grep -q "gate G1 candidate" && ok || fail "candidate commit"
+[ -z "$(git -C "$d" status --porcelain | grep -v gates.md)" ] && ok || fail "tree committed on PASS"
+grep -q '^- commit: ' "$d/.loopspace/gates.md" && ok || fail "commit line in ledger"
+
+# ---- prompt assembly ----
+grep -q "^MODE: G1$" "$d/captured.txt" && ok || fail "prompt MODE"
+grep -q "FULL SPEC:" "$d/captured.txt" && grep -q "R1: alpha" "$d/captured.txt" && ok || fail "prompt spec"
+grep -q "GATE LEDGER SO FAR:" "$d/captured.txt" && ok || fail "prompt ledger"
+grep -q "checkpoint gate of a lead-mode loopspace run" "$d/captured.txt" && ok || fail "prompt template text"
+grep -q "test: true" "$d/captured.txt" && ok || fail "prompt project facts"
+
+# ---- FAIL path ----
+d="$(make_lead_project)"; canned_fail "$d/report.txt"
+stub="$(stub_verifier "$d" "$d/report.txt")"
+out="$(LOOPSPACE_GATE_CMD="sh $stub" sh "$SCRIPT" "$d" G1 2>&1)"; rc=$?
+[ "$rc" -eq 1 ] || fail "fail rc (rc=$rc)"
+echo "$out" | grep -q 'expected "y", got "z"' && ok || fail "findings echoed"
+grep -q '^## \[gate G1\] verdict: FAIL' "$d/.loopspace/gates.md" && ok || fail "fail ledger entry"
+grep -q '^- finding: 1\.' "$d/.loopspace/gates.md" && ok || fail "findings in ledger"
+git -C "$d" log --oneline | grep -q "gate G1 verified" && fail "no verified commit on FAIL" || ok
+
+# ---- error path: no parseable verdict ----
+d="$(make_lead_project)"
+printf 'API error: overloaded\n' > "$d/report.txt"
+stub="$(stub_verifier "$d" "$d/report.txt")"
+out="$(LOOPSPACE_GATE_CMD="sh $stub" sh "$SCRIPT" "$d" G1 2>&1)"; rc=$?
+[ "$rc" -eq 3 ] && ok || fail "no-verdict rc (rc=$rc)"
+grep -q '^## \[gate G1\] error — no parseable verdict' "$d/.loopspace/gates.md" && ok || fail "error ledger entry"
+grep -q 'verdict: FAIL' "$d/.loopspace/gates.md" && fail "error must not be a FAIL" || ok
+
 echo "gate.test.sh: $PASS passed, $FAIL failed"
 [ "$FAIL" -eq 0 ]
