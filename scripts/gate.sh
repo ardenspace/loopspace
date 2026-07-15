@@ -97,7 +97,13 @@ kill_tree() {
 # uncommitted lead work ----
 ledger "## [gate $gid] opened $(date -u +%Y-%m-%dT%H:%M:%SZ)"
 git add -A
-git commit -q -m "loopspace: gate $gid candidate" 2>/dev/null || true
+if [ -n "$(git status --porcelain)" ]; then
+  git commit -q -m "loopspace: gate $gid candidate" 2>/dev/null || {
+    ledger "## [gate $gid] error — candidate commit failed; refusing to run the verifier on an unprotected tree"
+    echo "gate: candidate commit failed — fix the repo (hooks? signing?) and re-run" >&2
+    exit 3
+  }
+fi
 
 # ---- assemble prompt, run verifier (watchdogged in a later block) ----
 prompt_file="$(mktemp)"
@@ -122,7 +128,7 @@ trap 'rm -f "$prompt_file" "$out_file"' EXIT
 eval "$GATE_CMD" < "$prompt_file" > "$out_file" 2>&1
 vrc=$?
 
-verdict="$(sed -n 's/^verdict:[[:space:]]*//p' "$out_file" | tail -n 1 | tr -d '\r')"
+verdict="$(sed -n 's/^verdict:[[:space:]]*//p' "$out_file" | tail -n 1 | tr -d '\r' | sed 's/[[:space:]]*$//')"
 case "$verdict" in
   PASS|FAIL) ;;
   *)
@@ -132,7 +138,7 @@ case "$verdict" in
     exit 3 ;;
 esac
 
-report_line() { sed -n "s/^$1:[[:space:]]*/- $1: /p" "$out_file" | head -n 1; }
+report_line() { sed -n "s/^$1:[[:space:]]*/- $1: /p" "$out_file" | head -n 1 | tr -d '\r'; }
 now="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 
 if [ "$verdict" = "PASS" ]; then
@@ -143,7 +149,13 @@ if [ "$verdict" = "PASS" ]; then
     report_line mutation
   } >> "$LEDGER"
   git add -A
-  git commit -q -m "loopspace: gate $gid verified" 2>/dev/null || true
+  if [ -n "$(git status --porcelain)" ]; then
+    git commit -q -m "loopspace: gate $gid verified" 2>/dev/null || {
+      ledger "## [gate $gid] error — verified commit failed after PASS; checkpoint incomplete"
+      echo "gate: verified commit failed after PASS — fix the repo and re-run the gate" >&2
+      exit 3
+    }
+  fi
   echo "- commit: $(git rev-parse --short HEAD 2>/dev/null)" >> "$LEDGER"
   echo "gate: $gid PASS"
   exit 0
@@ -155,7 +167,7 @@ fi
   report_line note
   report_line probes
   report_line mutation
-  sed -n '/^findings:/,$p' "$out_file" | sed '1d' | sed 's/^/- finding: /'
+  sed -n '/^findings:/,$p' "$out_file" | sed '1d' | sed 's/^/- finding: /' | tr -d '\r'
 } >> "$LEDGER"
 echo "gate: $gid FAIL"
 sed -n '/^findings:/,$p' "$out_file"

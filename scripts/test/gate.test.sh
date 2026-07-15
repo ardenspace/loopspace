@@ -138,5 +138,22 @@ out="$(LOOPSPACE_GATE_CMD="sh $stub" sh "$SCRIPT" "$d" G1 2>&1)"; rc=$?
 grep -q '^## \[gate G1\] error — no parseable verdict' "$d/.loopspace/gates.md" && ok || fail "error ledger entry"
 grep -q 'verdict: FAIL' "$d/.loopspace/gates.md" && fail "error must not be a FAIL" || ok
 
+# ---- a genuinely failing commit is an infra error, not a silent no-op ----
+d="$(make_lead_project)"; canned_pass "$d/report.txt"
+stub="$(stub_verifier "$d" "$d/report.txt")"
+mkdir -p "$d/.git/hooks" && printf '#!/bin/sh\nexit 1\n' > "$d/.git/hooks/pre-commit" && chmod +x "$d/.git/hooks/pre-commit"
+echo "dirty" > "$d/lead-work.txt"
+out="$(LOOPSPACE_GATE_CMD="sh $stub" sh "$SCRIPT" "$d" G1 2>&1)"; rc=$?
+[ "$rc" -eq 3 ] && ok || fail "commit-fail rc (rc=$rc, $out)"
+grep -q 'candidate commit failed' "$d/.loopspace/gates.md" && ok || fail "commit-fail ledger entry"
+[ -f "$d/captured.txt" ] && fail "verifier must not run without candidate commit" || ok
+
+# ---- trailing whitespace after the verdict still parses ----
+d="$(make_lead_project)"
+printf 'verdict: PASS \nnote: trailing space\nprobes: p\nmutation: m\n' > "$d/report.txt"
+stub="$(stub_verifier "$d" "$d/report.txt")"
+out="$(LOOPSPACE_GATE_CMD="sh $stub" sh "$SCRIPT" "$d" G1 2>&1)"; rc=$?
+[ "$rc" -eq 0 ] && ok || fail "trailing-space verdict (rc=$rc, $out)"
+
 echo "gate.test.sh: $PASS passed, $FAIL failed"
 [ "$FAIL" -eq 0 ]
