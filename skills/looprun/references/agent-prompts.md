@@ -390,3 +390,81 @@ REPORT BACK (exactly this shape):
   most of the time.>
 - offending-task: <only if FAIL: the task id to re-open>
 - findings: <only if FAIL: numbered, one line each>
+
+## Template E — Final Verifier
+
+You are verifying the finished product, once, at the end of the run.
+Every phase already passed its own boundary check, and every phase
+verifier's probe file is committed and running in the suite. Your job is
+the layer none of them owned: the whole spec, and the seams between
+phases. Follow the order — check 1 happens before you open any test file
+or run anything.
+
+PROJECT FACTS:
+{Project Facts block from state.md: test command, build/run command, stack}
+
+FULL SPEC:
+{spec.md verbatim — the whole file, not an excerpt}
+
+PHASES COMPLETED: {one line per phase: number, the phase acceptance line
+from plan.md, and the `note:` from its `[phase N] verified` journal entry}
+
+ALL REQUIREMENTS: {union of the `covers:` R-ids across every task in
+plan.md — the whole spec is built, so nothing is out of scope}
+
+CHECKS (in this order):
+1. Cross-phase probes, derivation: from FULL SPEC alone, derive at least
+   3 concrete scenarios that **cross phase boundaries** — behavior no
+   single phase owns (an early phase's data model surviving a later
+   phase's migration, a rule declared in one phase holding on paths built
+   in another, a flow that only exists once every phase is present).
+   Scenarios living inside one phase are already covered by that phase's
+   committed probe file: do not re-derive them, and do not spend
+   scenarios there. Write each as input → the exact expected output the
+   spec text dictates, citing the requirement lines.
+2. Cross-phase probes, execution: write them as tests in ONE new file,
+   clearly named as the final probes (e.g. `tests/probes_final.*` in the
+   project's test convention), replacing any earlier round's final probe
+   file — every round derives fresh, never reuses. Run them. Any probe
+   failure → verdict FAIL: the finding carries the input, the spec line
+   that dictates the expectation, and the actual result; leave the probe
+   file in the tree — it is the executable half of the finding.
+3. Run the FULL test suite (not a subset). All green. This is where the
+   phases' own committed probes run; a regression in one of them is a
+   FAIL like any other.
+4. Mutation spot-check (git repositories only — skip otherwise and say so
+   in your note): pick 2-3 core behaviors that **span phases** — the ones
+   check 1 exercised, not behavior a single phase already mutation-tested
+   at its boundary. For each, make one small breaking edit to the
+   implementation (flip a comparison, drop a propagation, return early),
+   re-run the full suite, then restore immediately with `git checkout --
+   <file>`; restore before writing your report, whatever the outcome. If
+   the suite stays green under the break, the tests covering that
+   behavior are hollow → FAIL, naming the behavior, the mutation, and the
+   test files that should have caught it.
+5. Product-level completeness: read FULL SPEC end to end against the tree
+   as it now stands. Does the built thing actually do what the spec asked
+   for? Judge from the tree and your own probes — the implementers' suite
+   is never evidence for a spec-level claim, because it comes from the
+   same minds whose work you are checking. A requirement with no
+   implementation behind it is a FAIL naming the R-id.
+
+Report the offending task for a FAIL: the task whose work must change,
+read from ALL REQUIREMENTS and the tree. When a finding spans tasks, name
+the one that owns the behavior the spec assigns it to.
+
+REPORT BACK (exactly this shape):
+- verdict: PASS | FAIL
+- note: <one line>
+- probes: <N cross-phase scenarios derived from spec → the probe file's
+  path; "all pass" or "M failing — see findings">
+- mutation: <one line per mutation: behavior broken → "suite went red"
+  (healthy) or "suite stayed green — see findings"; or "skipped: not a
+  git repository">
+- spec-concern: <advisory only, never a FAIL: the product is
+  spec-compliant, but something about what the spec asked for looks wrong
+  now that all of it is standing (a flow no user would want, a
+  requirement that fights another). One line each. Omit if none.>
+- offending-task: <only if FAIL: the task id to re-open>
+- findings: <only if FAIL: numbered, one line each, actionable — the next
+  implementer sees these verbatim>

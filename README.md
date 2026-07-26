@@ -25,6 +25,10 @@ that task 2.3 quietly broke the thing task 4.1 depends on.
                                                    │  stalled? burst of │
                                                    │  diverse retries   │
                                                    └──────── loop ──────┘
+                                                    every phase boundary:
+                                                    fresh spec probes
+                                                    at the end, once:
+                                                    final verify vs whole spec
         state lives in .loopspace/ — kill the session, /loopresume continues
 
  done ──▶ use it ──▶ /loopnext ─────────────▶ /looprun ──▶ done ──▶ …
@@ -43,7 +47,12 @@ task, a fresh implementer subagent builds it under a TDD contract, and fresh ver
 independently check it — one mechanical verifier for `light` tasks, a three-lens panel
 (correctness, security, test-integrity) for `heavy` ones — until the plan is done or the
 loop halts with a report. A task that keeps failing escalates through a diversity burst
-of approach-forced retries before it is allowed to halt the run.
+of approach-forced retries before it is allowed to halt the run. When the
+last phase has passed its boundary, one **final verifier** checks the
+product itself: scenarios derived from the whole spec that cross phase
+boundaries, the full suite, a mutation spot-check on behavior that spans
+phases, and a completeness read of every requirement against the tree.
+`run_status: complete` is written only after it passes.
 `/loopresume` rebuilds the orchestrator's position from `.loopspace/` alone, so a
 killed session, a `/clear`, or a crash never loses more than the last task's progress.
 `/loopnext` closes the cycle: when a run is complete and using the result
@@ -64,8 +73,16 @@ cross-lineage verifier gate per acceptance group (`scripts/gate.sh`,
 `claude -p` under the hood — independent probes from the spec plus a
 mutation spot-check), a completion state only the final gate can write,
 budgets, and the same crash-safe disk state. 3 consecutive gate FAILs
-halt for a human. Which philosophy wins at scale is an open experiment;
-thick mode is untouched and remains the default.
+halt for a human.
+
+**Which one should you use?** The pipeline above — `/loopspec` →
+`/loopplan` → `/looprun`. It is the default and the supported path: you
+approve the plan, work is decomposed into phases and tasks, and every
+task and every boundary is independently verified. Lead mode is a
+research direction, not a newer version of it: there is no plan to
+approve, no per-task verification, and no phase structure. Reach for it
+only if you specifically want to test how thin a harness can get. Which
+philosophy wins at scale is an open experiment; thick mode is untouched.
 
 ## Install
 
@@ -156,6 +173,19 @@ restart at a stable point — task cycle done or handoff written.)
   Advisory notes are journaled and carried into the handoff, so a flagged task's own
   implementer sees the suspicion before building; the plan itself still changes only
   through the re-plan path.
+- **One final check on the product, not the phase.** Every boundary asks whether a
+  phase holds together; nothing asked whether the *thing* is done. So when the last
+  boundary passes, a fresh final verifier reads the whole spec against the tree. It
+  derives only scenarios that cross phase boundaries — a rule declared in phase 1
+  holding on paths built in phase 4, a flow that exists only once every phase is
+  standing — because each phase's own probes are already committed and running in the
+  suite. Then the full suite, a mutation spot-check on behavior that spans phases, and
+  a completeness read: a requirement with no implementation behind it fails, naming
+  the R-id. Before any of that is dispatched, the orchestrator does the mechanical half
+  itself — every requirement claimed by some task, every phase carrying a verified
+  entry, a clean tree — because that part is file reading and should never cost a
+  verifier call. Three rounds, then it halts. `run_status: complete` is written only on
+  the far side.
 - **Git checkpoints and branch isolation.** In a git repository the whole run lives on
   its own branch stack: spec approval creates `loopspace/<slug>/run` (spec and plan
   approvals are committed there), and execution stacks one branch per phase

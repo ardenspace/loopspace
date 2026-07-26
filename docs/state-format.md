@@ -287,6 +287,13 @@ version: 1
 - structure-note: <verbatim, advisory — phase-level structural-economy
   observation consumed by loopnext>
 
+## [final] verified — <one-line product-level note>   <!-- conducted mode:
+                                     once, after the last phase boundary
+                                     and before run_status: complete -->
+- probes: <N cross-phase scenarios derived from spec → tests/probes_final.*; all pass>
+- mutation: <behavior broken → suite went red | skipped: not a git repository>
+- spec-concern: <verbatim, advisory — carried into the completion report>
+
 ## [halt] resolved — <one line: the human's decision that cleared the halt>
 
 ## [harness] switched <old> → <new> (tier <A|B|C> → <A|B|C>)
@@ -392,7 +399,7 @@ after its content is journaled
 # Halt Report
 version: 1
 written: <YYYY-MM-DD>
-trigger: spec-gap           # task-stall | phase-stall | spec-gap | external-blocker | gate-stall (lead mode)
+trigger: spec-gap           # task-stall | phase-stall | final-stall | spec-gap | external-blocker | gate-stall (lead mode)
 harness: claude-code        # what actually ran — the honesty rule in
 tier: A                     # harnesses/PROFILE-SPEC.md
 current_branch: loopspace/<slug>/phase-3   # git projects only
