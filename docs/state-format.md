@@ -176,7 +176,10 @@ Added at spec approval (git projects only) — the three branch fields:
 base_branch: main                     # branch the run forked from; merge-back target
 run_branch: loopspace/<slug>/run      # per-run base branch, created at spec approval
 current_branch: loopspace/<slug>/run  # where work happens now; looprun moves it to
-                                      # loopspace/<slug>/phase-<N> as phases open
+                                      # loopspace/<slug>/phase-<N> as phases open, and
+                                      # never backward — once every task is done it
+                                      # stays on the highest phase branch even while
+                                      # final verification re-opens an earlier task
 ```
 
 From plan approval on, the full form, rewritten by looprun after every task:
