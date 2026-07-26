@@ -1,9 +1,16 @@
 ---
 name: looplead
-description: Use when a loopspace spec with acceptance groups has been approved and the run should execute in lead mode — one autonomous lead agent under machine-enforced gates, no plan.md. Also after a lead-mode halt the human has resolved.
+description: EXPERIMENTAL, not the default path (use /looprun unless the human specifically asked for lead mode). Use when a loopspace spec with acceptance groups has been approved and the run should execute in lead mode — one autonomous lead agent under machine-enforced gates, no plan.md, no per-task verification. Also after a lead-mode halt the human has resolved.
 ---
 
-# looplead — The Lead Loop (thin harness)
+# looplead — The Lead Loop (thin harness, experimental)
+
+**Status: experimental.** The supported default is the conducted
+pipeline (`/loopspec` → `/loopplan` → `/looprun`): a human-approved plan,
+phases and tasks, per-task and per-boundary verification. Lead mode
+trades all of that for autonomy under mechanical gates, and whether that
+trade pays off is an open question. Do not route a run here unless the
+human asked for lead mode by name.
 
 Principle: **Give autonomy. Enforce invariants.** The harness does not
 conduct your process — no task tree, no dispatch choreography, no per-task

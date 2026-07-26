@@ -1,5 +1,43 @@
 # Changelog
 
+## 0.18.0 — 2026-07-26
+
+**Final verification — one product-level check before a conducted run is
+allowed to call itself complete.** Plus an experimental label on lead
+mode.
+
+Why: every phase boundary asks whether *that phase* holds together, and
+nothing ever asked whether the *product* is done. At the last phase the
+boundary verifier can reach every requirement, but it is sized and framed
+as a phase check — three scenarios, "did these tasks integrate" — and no
+one checks that every requirement was claimed by some task at all. Lead
+mode already had this shape (`gate.sh --final`); thick mode did not.
+
+- **Template E — Final Verifier** (`skills/looprun/references/agent-prompts.md`):
+  cross-phase probes derived from the full spec before any test file is
+  opened, the full suite, a mutation spot-check on behavior that spans
+  phases, and a product-level completeness read that fails on a
+  requirement with nothing behind it. It derives **only** cross-phase
+  scenarios — each phase's own probe file is already committed and
+  running in the suite, so re-deriving inside a phase buys nothing.
+- **`## Final Verification`** in looprun: runs once, after the last phase
+  boundary PASSes and before `run_status: complete`. A **mechanical
+  pre-check the orchestrator performs itself** comes first — every R-id
+  claimed by some task's `covers:`, every phase carrying a `[phase N]
+  verified` entry, a clean tree — because that is file reading and must
+  never cost a verifier call (the pattern `gate.sh` already uses for its
+  final gate). 3 rounds maximum; a 4th FAIL halts (`final-stall`).
+- **Final debt** in the per-task cycle's step 0: when every task is done
+  there is no next task, so the closing sequence is now re-derived from
+  disk like the other debts — a session that died between the last task
+  and `complete` resumes into the right step instead of into nothing.
+- **state-format**: `[final] verified` journal entry, `final-stall`
+  trigger.
+- **Lead mode is labelled experimental** (`looplead` description and
+  SKILL body, README): the conducted pipeline is the supported default.
+  No behavior change — 0.17 semantics exactly. Revisit by 2026-10: either
+  measure whether lead mode earns its keep, or retire it.
+
 ## 0.17.0 — 2026-07-15
 
 **Lead mode — a thin harness: one autonomous lead agent, machine-enforced

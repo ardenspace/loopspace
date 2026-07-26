@@ -79,6 +79,13 @@ next task = first non-done task in plan order
      task is done" fired in a session that no longer exists. Run the
      Phase Boundary for the oldest such phase now, before dispatching
      anything.
+   - Final debt: if every task in plan.md is done, there is no next task
+     and the run is in its closing sequence — a session ended somewhere
+     between the last task and `run_status: complete`. Re-derive where:
+     any phase without a `[phase N] verified` entry gets its Phase
+     Boundary first (oldest first); once every phase has one, go to Final
+     Verification. Skip both if the journal already carries `[final]
+     verified` — then only step 4's completion report is left.
 1. Dispatch IMPLEMENTER (fresh) — prompt template A in references/agent-prompts.md
    - carries: Project Facts, spec excerpt (only the R-ids this task
      covers), the task block from plan.md, current handoff.md notes,
@@ -280,15 +287,19 @@ When the last task of a phase is done:
    `loopspace/<slug>/phase-<N+1>` on that boundary commit, check it out,
    and update `current_branch` in state.md, so each completed phase's tip
    stays a named, verified pointer — and continue to the next phase. If
-   this was the last phase, create no new branch: go to step 4.
-4. Last phase → set `run_status: complete`, write the final journal entry,
+   this was the last phase, create no new branch: go to Final
+   Verification below, and return to step 4 only when it passes.
+4. Last phase, Final Verification passed → set `run_status: complete`,
+   write the final journal entry,
    and (git projects) make a final commit on the current phase branch —
    message `loopspace: run complete — <slug>` — so `run_status: complete`
    and the last journal entry are checkpointed and the merge or PR below
    carries completed state, not `executing`. Then report totals to the
    human (tasks, retries, re-plans) and the harness/tier the run
    executed under (state.md fields; plus per-role models if the
-   profile routed any), plus every `spec-concern` line from
+   profile routed any), the final verification's `probes:` and
+   `mutation:` lines (what the last independent check actually
+   exercised), plus every `spec-concern` line from
    the journal, verbatim — the loop built what the spec said; whether the
    spec said the right thing is the human's question, and this is where
    they get to ask it. Mention `/loopnext`: when the human wants changes
@@ -302,6 +313,54 @@ When the last task of a phase is done:
      outside the tool),
    - push the branch and open a PR against `base_branch`, or
    - leave the branch as-is.
+
+## Final Verification
+
+The last phase boundary asks whether that phase holds together. This asks
+whether the *product* does — once, at the end, against the whole spec.
+Run it when the last phase's boundary PASSes, before anything in step 4.
+
+1. **Mechanical pre-check — you do this yourself, no dispatch.** It is
+   file reading, so it costs nothing, and it never spends a verifier call
+   on a run that is visibly incomplete:
+   - every R-id in spec.md's `## Requirements` appears in at least one
+     task's `covers:` line in plan.md;
+   - every phase has a `[phase N] verified` entry in journal.md;
+   - (git projects) no tracked file is modified. An untracked final probe
+     file is expected and fine — the next round replaces it.
+   A violation is not a FAIL — it is a gap in the run, and it is fixed
+   before the verifier is dispatched. Uncovered R-ids are the stall
+   policy tier 1 re-plan path (the plan never claimed them). A missing
+   boundary is boundary debt: run that Phase Boundary now, then start
+   this section over. A **modified tracked file** at this point is a dead
+   verifier's leftover, not work: every task and every boundary committed
+   on PASS, so nothing of yours is uncommitted here, and the one thing
+   that edits tracked files without committing is a mutation spot-check
+   whose session died before restoring. Restore it (`git checkout -- .`)
+   and journal the correction. Only when the modification is
+   demonstrably a task's own uncommitted work does it belong in a commit
+   on the current phase branch instead.
+2. Dispatch a **FINAL VERIFIER** (fresh, never an implementer, never a
+   phase verifier from this run) — template E: cross-phase probes derived
+   from the full spec before any test file is opened, full suite,
+   cross-phase mutation spot-check, and a product-level completeness read
+   of the whole spec against the tree. The dispatch carries spec.md
+   verbatim, one line per completed phase, and the union of `covers:`
+   R-ids. It derives only scenarios that cross phase boundaries: each
+   phase's own probe file is already committed and running in the suite,
+   so re-deriving inside a phase buys nothing.
+3. FAIL → treat as a failed task on `offending-task` (it re-enters the
+   per-task cycle with the findings, exactly as a phase FAIL does). The
+   failing probe file stays in the tree as the executable half of the
+   finding. **Maximum 3 final-verification rounds** — a 4th FAIL halts
+   (`report.md`, trigger: `final-stall`). After a repair, re-run this
+   section from step 1: a re-opened task can leave the tree dirty or
+   re-open a phase.
+4. PASS → journal `[final] verified` (append the verifier's `probes:` and
+   `mutation:` lines, and its `spec-concern` lines verbatim, if any);
+   commit (`loopspace: final verification passed`) so the probe file and
+   the journal entry are checkpointed. Then go to step 4 of the Phase
+   Boundary — the completion report.
 
 ## Context Threshold (the 30% rule)
 
