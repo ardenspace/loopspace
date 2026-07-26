@@ -1,5 +1,28 @@
 # Changelog
 
+## 0.18.1 — 2026-07-26
+
+**Fix: final verification now re-verifies the phase it re-opens.** When
+the final verifier sends a task back, that task's phase was already
+sealed with a `[phase N] verified` entry — and because the journal is
+append-only, nothing struck it. The mechanical pre-check and Final debt
+both read the stale stamp and skipped the phase boundary, so the fix was
+re-checked only as a lone task and by the cross-phase final sweep; the
+phase's own internal integration was never re-examined. The SKILL prose
+already promised "a re-opened task can re-open a phase" — this makes the
+mechanism deliver it.
+
+- Final Verification FAIL now journals `[phase N] reopened — final
+  verification re-opened <task id>`, striking the phase's earlier
+  `[phase N] verified`.
+- The mechanical pre-check and step-0 Final debt treat a phase as
+  verified only when its **latest** boundary marker is `verified`, not a
+  later `reopened` — so the struck phase's boundary re-runs (fresh
+  probes, suite, mutation) before the final verifier is dispatched again.
+- All markers are journaled and committed, so the re-open → re-verify →
+  re-final sequence survives a crash via the existing debt logic.
+- `state-format.md` documents the `[phase N] reopened` entry.
+
 ## 0.18.0 — 2026-07-26
 
 **Final verification — one product-level check before a conducted run is

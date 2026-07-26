@@ -81,11 +81,14 @@ next task = first non-done task in plan order
      anything.
    - Final debt: if every task in plan.md is done, there is no next task
      and the run is in its closing sequence — a session ended somewhere
-     between the last task and `run_status: complete`. Re-derive where:
-     any phase without a `[phase N] verified` entry gets its Phase
-     Boundary first (oldest first); once every phase has one, go to Final
-     Verification. Skip both if the journal already carries `[final]
-     verified` — then only step 4's completion report is left.
+     between the last task and `run_status: complete`, or final
+     verification just re-opened and repaired a task. Re-derive where:
+     any phase whose latest boundary marker is not a live `[phase N]
+     verified` — a later `[phase N] reopened` struck it, or it never had
+     one — gets its Phase Boundary first (oldest first); once every phase
+     has a live one, go to Final Verification. Skip both if the journal
+     already carries `[final] verified` — then only step 4's completion
+     report is left.
 1. Dispatch IMPLEMENTER (fresh) — prompt template A in references/agent-prompts.md
    - carries: Project Facts, spec excerpt (only the R-ids this task
      covers), the task block from plan.md, current handoff.md notes,
@@ -325,7 +328,10 @@ Run it when the last phase's boundary PASSes, before anything in step 4.
    on a run that is visibly incomplete:
    - every R-id in spec.md's `## Requirements` appears in at least one
      task's `covers:` line in plan.md;
-   - every phase has a `[phase N] verified` entry in journal.md;
+   - every phase's latest boundary marker in journal.md is a live
+     `[phase N] verified` — a later `[phase N] reopened` (a task the
+     final verifier sent back) strikes it, and that phase counts as
+     unverified until its boundary re-runs;
    - (git projects) no tracked file is modified. An untracked final probe
      file is expected and fine — the next round replaces it.
    A violation is not a FAIL — it is a gap in the run, and it is fixed
@@ -352,10 +358,15 @@ Run it when the last phase's boundary PASSes, before anything in step 4.
 3. FAIL → treat as a failed task on `offending-task` (it re-enters the
    per-task cycle with the findings, exactly as a phase FAIL does). The
    failing probe file stays in the tree as the executable half of the
-   finding. **Maximum 3 final-verification rounds** — a 4th FAIL halts
+   finding. That task's phase was already sealed, so its
+   `[phase N] verified` entry is now stale — the fix must be re-checked at
+   the phase boundary, not just as a lone task. Journal
+   `[phase N] reopened — final verification re-opened <task id>` for that
+   phase: it strikes the earlier `[phase N] verified`, so step 0's Final
+   debt re-runs that boundary before the final verifier is dispatched
+   again. **Maximum 3 final-verification rounds** — a 4th FAIL halts
    (`report.md`, trigger: `final-stall`). After a repair, re-run this
-   section from step 1: a re-opened task can leave the tree dirty or
-   re-open a phase.
+   section from step 1.
 4. PASS → journal `[final] verified` (append the verifier's `probes:` and
    `mutation:` lines, and its `spec-concern` lines verbatim, if any);
    commit (`loopspace: final verification passed`) so the probe file and

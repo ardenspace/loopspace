@@ -287,6 +287,12 @@ version: 1
 - structure-note: <verbatim, advisory — phase-level structural-economy
   observation consumed by loopnext>
 
+## [phase 3] reopened — final verification re-opened 3.2   <!-- conducted
+                                     mode: strikes an earlier [phase 3]
+                                     verified so its boundary re-runs
+                                     before the final verifier is
+                                     dispatched again -->
+
 ## [final] verified — <one-line product-level note>   <!-- conducted mode:
                                      once, after the last phase boundary
                                      and before run_status: complete -->
