@@ -51,7 +51,9 @@ of approach-forced retries before it is allowed to halt the run. When the
 last phase has passed its boundary, one **final verifier** checks the
 product itself: scenarios derived from the whole spec that cross phase
 boundaries, the full suite, a mutation spot-check on behavior that spans
-phases, and a completeness read of every requirement against the tree.
+phases, and a completeness read of every requirement against the tree. A
+task it sends back re-opens its phase too, so the repair faces that
+phase's boundary again before the final sweep re-runs.
 `run_status: complete` is written only after it passes.
 `/loopresume` rebuilds the orchestrator's position from `.loopspace/` alone, so a
 killed session, a `/clear`, or a crash never loses more than the last task's progress.
@@ -182,10 +184,13 @@ restart at a stable point — task cycle done or handoff written.)
   suite. Then the full suite, a mutation spot-check on behavior that spans phases, and
   a completeness read: a requirement with no implementation behind it fails, naming
   the R-id. Before any of that is dispatched, the orchestrator does the mechanical half
-  itself — every requirement claimed by some task, every phase carrying a verified
+  itself — every requirement claimed by some task, every phase carrying a live verified
   entry, a clean tree — because that part is file reading and should never cost a
-  verifier call. Three rounds, then it halts. `run_status: complete` is written only on
-  the far side.
+  verifier call. A FAIL sends one task back, and it also **strikes that task's phase**:
+  the phase was sealed before the final sweep existed to contradict it, so the repair
+  is re-checked at its own boundary — fresh probes, suite, mutation — and only then does
+  the final verifier run again. Three rounds, then it halts. `run_status: complete` is
+  written only on the far side.
 - **Git checkpoints and branch isolation.** In a git repository the whole run lives on
   its own branch stack: spec approval creates `loopspace/<slug>/run` (spec and plan
   approvals are committed there), and execution stacks one branch per phase

@@ -54,7 +54,14 @@ below. `run_status: complete` → say so, stop. All file formats:
   between a phase boundary commit and the next branch's creation, and one
   where the branch was created but `current_branch` was never updated. Task
   commits, rollbacks, and burst resets all happen on the current phase
-  branch. No branch fields in state.md means a non-git project or a
+  branch. **Closing-sequence exception:** once every task in plan.md is
+  done, stop deriving P from plan order — P is the highest phase number,
+  always, even while an earlier phase's task is re-opened and pending
+  again. Final verification can send back a task from any phase, and
+  deriving P from it would check out that phase's branch and take every
+  later phase back out of the tree. Repairs in the closing sequence move
+  forward on the newest phase branch, never backward onto a sealed one.
+  No branch fields in state.md means a non-git project or a
   pre-0.6.0 run: skip all branch logic.
 
 ## Per-Task Cycle
@@ -268,7 +275,11 @@ When the last task of a phase is done:
    any finding, and the next verifier re-derives from the spec text.
    **Maximum 3 phase-verification rounds per phase** — fixing task A can
    break task B and ping-pong forever; a 4th FAIL halts (`report.md`,
-   trigger: `phase-stall`).
+   trigger: `phase-stall`). Count the rounds since this phase's latest
+   boundary marker in journal.md: a `[phase N] reopened` starts a fresh
+   count, because the run has moved on and the earlier rounds settled a
+   question the final verifier has since re-asked. The final
+   verification's own 3-round cap is what bounds that outer loop.
 3. PASS → do this for **every** phase, the last one included: journal
    `[phase N] verified` (append the verifier's `probes:` and `mutation:`
    lines, and its `structure-note`, `freshness-note`, and `spec-concern`
@@ -286,7 +297,13 @@ When the last task of a phase is done:
    uncommitted into the next phase. The committed probes join the suite
    as a regression floor for later phases — but they are never evidence
    at the next boundary: each phase verifier derives its own, fresh.
-   Then branch **only if a next phase exists** — git projects, create
+   Then branch **only if a next phase exists and this is not a
+   closing-sequence re-verification** — a boundary re-run for a phase that
+   `[phase N] reopened` struck makes no branch and moves nowhere: its
+   successor branches already exist, the run is already on the newest one
+   (the closing-sequence exception in the Orchestrator Contract), and the
+   next step is Final Verification, not phase N+1. Otherwise: git
+   projects, create
    `loopspace/<slug>/phase-<N+1>` on that boundary commit, check it out,
    and update `current_branch` in state.md, so each completed phase's tip
    stays a named, verified pointer — and continue to the next phase. If

@@ -1,5 +1,35 @@
 # Changelog
 
+## 0.18.2 — 2026-07-26
+
+**Fix: a closing-sequence repair moves forward, never back onto a sealed
+phase branch.** 0.18.1 made a final-verification FAIL re-open the
+offending task's phase so its boundary re-runs. But branch discipline
+derives the current phase branch from *the next non-done task in plan
+order*, and a re-opened task from phase 3 of a five-phase run made that
+`phase-3` — checking out a branch that predates phases 4 and 5 and taking
+their work out of the tree. The repair, the boundary re-run, and the
+final sweep would then all run against an incomplete product, and the
+completion report would offer to merge the truncated branch.
+
+Phase boundaries could always name a task from an earlier phase, so the
+exposure is not new — but the final verifier sweeps every phase by
+design, which turns a rare case into the normal one.
+
+- **Closing-sequence exception** in branch discipline: once every task in
+  plan.md is done, the phase branch is the highest phase number, always —
+  plan order stops deciding it. Repairs move forward on the newest
+  branch.
+- A boundary re-run for a phase struck by `[phase N] reopened` **creates
+  no branch and moves nowhere**: its successors already exist and the
+  next step is Final Verification, not phase N+1.
+- The 3-round phase-verification cap counts **since the phase's latest
+  boundary marker** — a `reopened` starts a fresh count, so a phase that
+  spent its rounds earlier in the run cannot halt on the first FAIL after
+  the final verifier re-asks the question. Final verification's own
+  3-round cap bounds the outer loop.
+- `state-format.md`: `current_branch` never moves backward.
+
 ## 0.18.1 — 2026-07-26
 
 **Fix: final verification now re-verifies the phase it re-opens.** When
