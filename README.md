@@ -1,5 +1,24 @@
 # loopspace
 
+> **Status: archived, no longer maintained.** Development stopped at 0.18.2
+> (2026-07-26). The repository is kept read-only because the experiments that
+> measured it link here; nothing below is being updated.
+>
+> **Where the work went.** The line of thinking continued in two successors,
+> both of which reframe the same question — how much verification is worth its
+> cost — around decision reversibility rather than uniform per-task rigor:
+> [talpi](https://github.com/ardenspace/talpi) (hard-to-change boundaries get
+> contract tests; the interior is delegated) and
+> [wellbegun](https://github.com/ardenspace/wellbegun) (MVP planning through the
+> same lens).
+>
+> **What was measured.** [ornith × loopspace
+> experiments](https://github.com/ardenspace/ornith-loopspace-test) ran this
+> harness against solo builds with a held-out oracle. Read that before assuming
+> the harness earned its keep: on precise specs the correctness delta was zero,
+> and the one arm that looked like a win turned out to be confounded by
+> implementer escalation.
+
 A spec-driven autonomous harness — native to Claude Code, portable beyond it. **Keep context light, verify heavy.**
 
 ## The bet
